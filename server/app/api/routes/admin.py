@@ -1,0 +1,430 @@
+"""Admin routes used by admin dashboard UI."""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
+from pydantic import BaseModel, Field
+from sqlalchemy import and_, func, select, update
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ...core.dependencies import CurrentIdentity, require_roles
+from ...core.database import get_db
+from ...models import Admin, Appointment, Doctor, MedicalRecord, Patient, User
+from ...services.audit_service import write_audit_log
+
+router = APIRouter(prefix="/admin")
+
+
+@router.get("/users")
+async def admin_list_users(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=500),
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    offset = (page - 1) * page_size
+    stmt = (
+        select(User)
+        .where(User.tenant_id == identity.tenant_id, User.deleted_at.is_(None))
+        .order_by(User.created_at.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    
+    result = []
+    for row in rows:
+        full_name = None
+        
+        # Get full_name from the appropriate role-specific table
+        if row.role == "PATIENT":
+            patient = (
+                await db.execute(
+                    select(Patient).where(Patient.user_id == row.id)
+                )
+            ).scalar_one_or_none()
+            if patient:
+                full_name = patient.full_name
+        elif row.role == "DOCTOR":
+            doctor = (
+                await db.execute(
+                    select(Doctor).where(Doctor.user_id == row.id)
+                )
+            ).scalar_one_or_none()
+            if doctor:
+                full_name = doctor.full_name
+        elif row.role == "ADMIN":
+            # Get full_name from admins table
+            admin = (
+                await db.execute(
+                    select(Admin).where(Admin.user_id == row.id)
+                )
+            ).scalar_one_or_none()
+            if admin:
+                full_name = admin.full_name
+            else:
+                full_name = row.email
+        
+        result.append({
+            "id": row.id,
+            "name": full_name or row.email,  # Fallback to email if full_name is not found
+            "email": row.email,
+            "role": row.role,
+            "is_deleted": bool(row.deleted_at),
+        })
+    
+    return result
+
+
+@router.get("/appointments")
+async def admin_list_appointments(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=25, ge=1, le=500),
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    offset = (page - 1) * page_size
+    stmt = (
+        select(Appointment)
+        .where(Appointment.tenant_id == identity.tenant_id)
+        .order_by(Appointment.appointment_time.desc())
+        .offset(offset)
+        .limit(page_size)
+    )
+    rows = (await db.execute(stmt)).scalars().all()
+    return [
+        {
+            "id": row.id,
+            "date": row.appointment_time.isoformat(),
+            "doctor": row.doctor_id,
+            "patient": row.patient_id,
+            "status": row.status,
+        }
+        for row in rows
+    ]
+
+
+@router.get("/reports")
+async def admin_reports(
+    date_from: str = "",
+    date_to: str = "",
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    _ = (date_from, date_to)
+
+    monthly_patient_count = (
+        await db.execute(
+            select(func.count(Patient.id)).where(Patient.tenant_id == identity.tenant_id, Patient.deleted_at.is_(None))
+        )
+    ).scalar_one()
+    diagnosis_frequency = (
+        await db.execute(
+            select(func.count(MedicalRecord.id)).where(
+                MedicalRecord.tenant_id == identity.tenant_id,
+                MedicalRecord.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one()
+    doctor_count = (
+        await db.execute(
+            select(func.count(Doctor.id)).where(Doctor.tenant_id == identity.tenant_id, Doctor.deleted_at.is_(None))
+        )
+    ).scalar_one()
+    completed_appointments = (
+        await db.execute(
+            select(func.count(Appointment.id)).where(
+                Appointment.tenant_id == identity.tenant_id,
+                Appointment.status == "COMPLETED",
+                Appointment.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one()
+
+    utilization = 0 if doctor_count == 0 else round(float(completed_appointments) / float(doctor_count), 2)
+    return {
+        "monthly_patient_count": int(monthly_patient_count or 0),
+        "diagnosis_frequency": int(diagnosis_frequency or 0),
+        "doctor_utilization_rate": utilization,
+    }
+
+
+class AdminCreateUserRequest(BaseModel):
+    role: str = Field(pattern="^(PATIENT|DOCTOR|ADMIN)$")
+    full_name: str = Field(min_length=3, max_length=255)
+    email: str = Field(min_length=5, max_length=255)
+    password: str = Field(min_length=5, max_length=255)
+    phone: str = Field(default="", max_length=50)
+    specialty: str = Field(default="", max_length=255)
+    license_number: str = Field(default="", max_length=100)
+    insurance_provider: str = Field(default="", max_length=255)
+    insurance_policy_number: str = Field(default="", max_length=255)
+    date_of_birth: date | None = None
+    gender: str | None = None
+    address_line1: str = Field(default="", max_length=255)
+    address_line2: str = Field(default="", max_length=255)
+    city: str = Field(default="", max_length=100)
+    state: str = Field(default="", max_length=100)
+    postal_code: str = Field(default="", max_length=20)
+    country: str = Field(default="USA", max_length=100)
+
+
+@router.post("/users", status_code=status.HTTP_201_CREATED)
+async def admin_create_user(
+    request: Request,
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Admin endpoint to create new users."""
+    from ...core.security import hash_password
+    
+    # Manually parse JSON body
+    try:
+        body = await request.json()
+        print(f"Received raw body: {body}")
+        print(f"Body type: {type(body)}")
+    except Exception as e:
+        print(f"Failed to parse JSON: {e}")
+        raise HTTPException(status_code=422, detail="Invalid JSON in request body")
+    
+    # Validate and create model
+    try:
+        payload = AdminCreateUserRequest(**body)
+        print(f"Parsed payload: {payload}")
+    except Exception as e:
+        print(f"Validation error: {e}")
+        raise HTTPException(status_code=422, detail="Invalid request format. Please check your input and try again.")
+    
+    # Hash password
+    password_hash = hash_password(payload.password)
+    
+    # Create user
+    user = User(
+        tenant_id=identity.tenant_id,
+        email=payload.email.lower().strip(),
+        password_hash=password_hash,
+        role=payload.role,
+        is_active=True,
+    )
+    db.add(user)
+    try:
+        await db.flush()
+    except IntegrityError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered.")
+    
+    # Create role-specific record
+    if payload.role == "PATIENT":
+        patient = Patient(
+            tenant_id=identity.tenant_id,
+            user_id=user.id,
+            full_name=payload.full_name,
+            phone=payload.phone or None,
+            insurance_provider=payload.insurance_provider or None,
+            insurance_policy_number=payload.insurance_policy_number or None,
+            date_of_birth=payload.date_of_birth,
+            gender=payload.gender,
+            address_line1=payload.address_line1 or None,
+            address_line2=payload.address_line2 or None,
+            city=payload.city or None,
+            state=payload.state or None,
+            postal_code=payload.postal_code or None,
+            country=payload.country or None,
+        )
+        db.add(patient)
+    elif payload.role == "DOCTOR":
+        doctor = Doctor(
+            tenant_id=identity.tenant_id,
+            user_id=user.id,
+            full_name=payload.full_name,
+            specialty=payload.specialty,
+            license_number=payload.license_number,
+        )
+        db.add(doctor)
+    elif payload.role == "ADMIN":
+        admin = Admin(
+            tenant_id=identity.tenant_id,
+            user_id=user.id,
+            full_name=payload.full_name,
+            phone=payload.phone,
+        )
+        db.add(admin)
+    
+    await db.commit()
+    return {"id": str(user.id)}
+
+
+@router.patch("/users/{user_id}/soft-delete")
+async def soft_delete_user(
+    user_id: str,
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    # First get the user to determine their role
+    user = (
+        await db.execute(
+            select(User).where(User.id == user_id, User.tenant_id == identity.tenant_id, User.deleted_at.is_(None))
+        )
+    ).scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+    
+    # Based on the user's role, delete from the appropriate table
+    if user.role == "PATIENT":
+        # Find and soft delete the patient record
+        patient = (
+            await db.execute(
+                select(Patient).where(Patient.user_id == user_id, Patient.deleted_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        if patient:
+            # First, get the user_uuid from the patient record
+            user_uuid_to_update = patient.user_id
+            patient_uuid = patient.id
+            
+            # Update the users table with is_active = FALSE and deleted_at = NOW()
+            await db.execute(
+                update(User)
+                .where(User.id == user_uuid_to_update)
+                .values(is_active=False, deleted_at=datetime.utcnow())
+            )
+            
+            # Then update the patients table with deleted_at = NOW()
+            old_data = {"deleted_at": patient.deleted_at.isoformat() if patient.deleted_at else None}
+            patient.deleted_at = datetime.utcnow()
+            patient.deleted_by = identity.user_id
+            
+            await write_audit_log(
+                db,
+                tenant_id=identity.tenant_id,
+                table_name="patients",
+                record_id=patient_uuid,
+                action_type="DELETE",
+                old_data=old_data,
+                new_data={"deleted_at": patient.deleted_at.isoformat(), "deleted_by": identity.user_id},
+                performed_by=identity.user_id,
+            )
+            
+            await write_audit_log(
+                db,
+                tenant_id=identity.tenant_id,
+                table_name="users",
+                record_id=user_uuid_to_update,
+                action_type="DELETE",
+                old_data={"is_active": True, "deleted_at": None},
+                new_data={"is_active": False, "deleted_at": datetime.utcnow().isoformat()},
+                performed_by=identity.user_id,
+            )
+    elif user.role == "DOCTOR":
+        # Find and soft delete the doctor record
+        doctor = (
+            await db.execute(
+                select(Doctor).where(Doctor.user_id == user_id, Doctor.deleted_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        if doctor:
+            old_data = {"deleted_at": doctor.deleted_at.isoformat() if doctor.deleted_at else None}
+            doctor.deleted_at = datetime.utcnow()
+            doctor.deleted_by = identity.user_id
+            
+            await write_audit_log(
+                db,
+                tenant_id=identity.tenant_id,
+                table_name="doctors",
+                record_id=doctor.id,
+                action_type="DELETE",
+                old_data=old_data,
+                new_data={"deleted_at": doctor.deleted_at.isoformat(), "deleted_by": identity.user_id},
+                performed_by=identity.user_id,
+            )
+            
+            # Also soft delete the user record for doctors
+            await db.execute(
+                update(User)
+                .where(User.id == user_id)
+                .values(is_active=False, deleted_at=datetime.utcnow())
+            )
+            
+            await write_audit_log(
+                db,
+                tenant_id=identity.tenant_id,
+                table_name="users",
+                record_id=user_id,
+                action_type="DELETE",
+                old_data={"is_active": True, "deleted_at": None},
+                new_data={"is_active": False, "deleted_at": datetime.utcnow().isoformat()},
+                performed_by=identity.user_id,
+            )
+    elif user.role == "ADMIN":
+        # Find and soft delete the admin record
+        admin = (
+            await db.execute(
+                select(Admin).where(Admin.user_id == user_id, Admin.deleted_at.is_(None))
+            )
+        ).scalar_one_or_none()
+        if admin:
+            old_data = {"deleted_at": admin.deleted_at.isoformat() if admin.deleted_at else None}
+            admin.deleted_at = datetime.utcnow()
+            admin.deleted_by = identity.user_id
+            
+            await write_audit_log(
+                db,
+                tenant_id=identity.tenant_id,
+                table_name="admins",
+                record_id=admin.id,
+                action_type="DELETE",
+                old_data=old_data,
+                new_data={"deleted_at": admin.deleted_at.isoformat(), "deleted_by": identity.user_id},
+                performed_by=identity.user_id,
+            )
+        
+        # Also soft delete the user record for admins
+        await db.execute(
+            update(User)
+            .where(User.id == user_id)
+            .values(is_active=False, deleted_at=datetime.utcnow())
+        )
+        
+        await write_audit_log(
+            db,
+            tenant_id=identity.tenant_id,
+            table_name="users",
+            record_id=user_id,
+            action_type="DELETE",
+            old_data={"is_active": True, "deleted_at": None},
+            new_data={"is_active": False, "deleted_at": datetime.utcnow().isoformat()},
+            performed_by=identity.user_id,
+        )
+    
+    await db.commit()
+    return {"message": f"{user.role} soft deleted successfully."}
+
+
+@router.patch("/users/{user_id}/restore")
+async def restore_user(
+    user_id: str,
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    user = (
+        await db.execute(select(User).where(User.id == user_id, User.tenant_id == identity.tenant_id))
+    ).scalar_one_or_none()
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found.")
+
+    user.deleted_at = None
+    user.deleted_by = None
+    await write_audit_log(
+        db,
+        tenant_id=identity.tenant_id,
+        table_name="users",
+        record_id=user.id,
+        action_type="UPDATE",
+        old_data={"restored": False},
+        new_data={"restored": True},
+        performed_by=identity.user_id,
+    )
+    await db.commit()
+    return {"message": "User restored."}

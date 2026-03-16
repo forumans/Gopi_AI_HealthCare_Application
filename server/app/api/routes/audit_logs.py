@@ -1,0 +1,48 @@
+"""Audit log query endpoint used by admin UI."""
+
+from __future__ import annotations
+
+from datetime import datetime
+
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import and_, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from ...core.dependencies import CurrentIdentity, get_current_identity, require_roles
+from ...core.database import get_db
+from ...models import AuditLog
+
+router = APIRouter()
+
+
+@router.get("/audit-logs")
+async def list_audit_logs(
+    table: str = Query(default=""),
+    date_from: str = Query(default=""),
+    date_to: str = Query(default=""),
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    conditions = [AuditLog.tenant_id == identity.tenant_id]
+
+    if table.strip():
+        conditions.append(AuditLog.table_name == table.strip())
+    if date_from.strip():
+        conditions.append(AuditLog.performed_at >= datetime.fromisoformat(date_from))
+    if date_to.strip():
+        conditions.append(AuditLog.performed_at <= datetime.fromisoformat(date_to))
+
+    stmt = select(AuditLog).where(and_(*conditions)).order_by(AuditLog.performed_at.desc()).limit(200)
+    rows = (await db.execute(stmt)).scalars().all()
+
+    return [
+        {
+            "action": row.action_type,
+            "timestamp": row.performed_at.isoformat(),
+            "performed_by": row.performed_by or "",
+            "table": row.table_name,
+            "old": row.old_data or {},
+            "new": row.new_data or {},
+        }
+        for row in rows
+    ]
