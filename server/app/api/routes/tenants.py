@@ -37,6 +37,33 @@ async def create_tenant(
     return {"id": tenant.id, "name": tenant.name, "domain": tenant.domain}
 
 
+@router.get("/debug")
+async def debug_tenant_info(
+    identity: CurrentIdentity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Debug endpoint to check tenant information"""
+    return {
+        "identity": {
+            "tenant_id": identity.tenant_id,
+            "user_id": identity.user_id,
+            "role": identity.role
+        }
+    }
+
+
+@router.get("/current")
+async def get_current_tenant(
+    identity: CurrentIdentity = Depends(get_current_identity),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Get the current user's tenant information"""
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == identity.tenant_id))).scalar_one_or_none()
+    if tenant is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Tenant not found.")
+    return {"id": tenant.id, "name": tenant.name, "domain": tenant.domain}
+
+
 @router.get("/{tenant_id}")
 async def get_tenant(
     tenant_id: str,

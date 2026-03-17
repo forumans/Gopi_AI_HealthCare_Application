@@ -3347,7 +3347,7 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
                     let hour = parseInt(time);
                     if (period === "PM" && hour !== 12) hour += 12;
                     if (period === "AM" && hour === 12) hour = 0;
-                    return hour <= today.getHours(); // Changed from < to <= to include current hour
+                    return hour < today.getHours();
                   })());
                   
                   const isoString = `${col.year.toString().padStart(4, '0')}-${(col.month).toString().padStart(2, '0')}-${col.date.toString().padStart(2, '0')}T${(() => {

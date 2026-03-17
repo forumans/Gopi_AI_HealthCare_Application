@@ -1,244 +1,182 @@
 /**
  * User Data Hook
- * Manages user profile data, patient details, doctor details, and admin data
- * Provides centralized user data management logic
+ * Manages user data fetching and state management
  */
 
-import { useState, useEffect } from "react";
-import { api } from "../api";
-import { parseErrorMessage } from "../utils";
-import type { 
-  AdminUserRow, 
-  SessionState,
-  Role 
-} from "../types/app";
+import { useState, useEffect } from 'react';
+import { api } from '../api';
+import type { SessionState } from '../types/app';
+
+interface UserDataState {
+  users: any[];
+  adminUsers: any[];
+  reports: any;
+  patientDetails: any;
+  tenantInfo: any;
+  loading: boolean;
+  error: string | null;
+}
 
 export function useUserData(session: SessionState) {
-  const [patientDetails, setPatientDetails] = useState<any>(null);
-  const [doctorDetails, setDoctorDetails] = useState<any>(null);
-  const [adminDetails, setAdminDetails] = useState<any>(null);
-  const [adminUsers, setAdminUsers] = useState<AdminUserRow[]>([]);
-  const [adminReports, setAdminReports] = useState<Record<string, string | number>>({});
+  const [state, setState] = useState<UserDataState>({
+    users: [],
+    adminUsers: [],
+    reports: {},
+    patientDetails: null,
+    tenantInfo: null,
+    loading: false,
+    error: null
+  });
 
-  // Load patient details when patient logs in
-  useEffect(() => {
-    if (session.role === "PATIENT" && session.accessToken) {
-      loadPatientDetails();
+  const loadUsers = async () => {
+    if (!session.accessToken || session.role !== 'ADMIN') {
+      return;
     }
-  }, [session.role, session.accessToken]);
 
-  // Load doctor details when doctor logs in
-  useEffect(() => {
-    if (session.role === "DOCTOR" && session.accessToken) {
-      loadDoctorDetails();
-    }
-  }, [session.role, session.accessToken]);
-
-  // Load admin details when admin logs in
-  useEffect(() => {
-    if (session.role === "ADMIN" && session.accessToken) {
-      loadAdminDetails();
-    }
-  }, [session.role, session.accessToken, session.userName]);
-
-  // Listen for patient details refresh events
-  useEffect(() => {
-    const handlePatientDetailsRefresh = (event: any) => {
-      if (event.detail) {
-        setPatientDetails(event.detail);
-      }
-    };
-
-    window.addEventListener('patientDetailsRefresh', handlePatientDetailsRefresh);
-    return () => {
-      window.removeEventListener('patientDetailsRefresh', handlePatientDetailsRefresh);
-    };
-  }, []);
-
-  /**
-   * Loads current patient details
-   */
-  async function loadPatientDetails() {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
     try {
-      const details = await api.getCurrentPatient(session.accessToken);
-      setPatientDetails(details);
+      const users = await api.getUsers(session.accessToken);
+      setState(prev => ({
+        ...prev,
+        users,
+        loading: false,
+        error: null
+      }));
     } catch (error) {
-      console.error("Failed to load patient details:", error);
-      throw new Error(parseErrorMessage(error));
+      console.error('Failed to load users:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load users'
+      }));
     }
-  }
+  };
 
-  /**
-   * Loads current doctor details
-   */
-  async function loadDoctorDetails() {
-    try {
-      const response = await fetch('http://127.0.0.1:8000/doctors/me', {
-        headers: {
-          'Authorization': `Bearer ${session.accessToken}`
-        }
-      });
-      const data = await response.json();
-      setDoctorDetails(data);
-    } catch (error) {
-      console.error("Failed to load doctor details:", error);
-      throw new Error(parseErrorMessage(error));
+  const loadAdminDashboard = async () => {
+    if (!session.accessToken || session.role !== 'ADMIN') {
+      return;
     }
-  }
 
-  /**
-   * Loads admin details (uses session data)
-   */
-  async function loadAdminDetails() {
-    setAdminDetails({
-      name: session.userName || 'Admin',
-      email: 'admin@healthsphere.com',
-      role: session.role
-    });
-  }
-
-  /**
-   * Loads admin dashboard data
-   */
-  async function loadAdminDashboard() {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
     try {
-      console.log("Loading admin dashboard with token:", session.accessToken ? "Present" : "Missing");
-      const [users, reports] = await Promise.all([
-        api.listAdminUsers(session.accessToken, 1, 25),
-        api.reports(session.accessToken),
+      // Load admin users and reports
+      const [adminUsers, reports] = await Promise.all([
+        api.getUsers(session.accessToken),
+        api.getAdminReports(session.accessToken)
       ]);
-      setAdminUsers(users);
-      setAdminReports(reports);
       
-      const patientCount = typeof reports.monthly_patient_count === 'string' 
-        ? parseInt(reports.monthly_patient_count, 10) 
-        : reports.monthly_patient_count || 0;
-      const diagnosisCount = typeof reports.diagnosis_frequency === 'string' 
-        ? parseInt(reports.diagnosis_frequency, 10) 
-        : reports.diagnosis_frequency || 0;
-      const utilization = typeof reports.doctor_utilization_rate === 'string' 
-        ? parseFloat(reports.doctor_utilization_rate) 
-        : reports.doctor_utilization_rate || 0;
+      setState(prev => ({
+        ...prev,
+        adminUsers,
+        reports,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('Failed to load admin dashboard:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load admin dashboard'
+      }));
+    }
+  };
+
+  const loadPatientDetails = async () => {
+    if (!session.accessToken || session.role !== 'PATIENT') {
+      return;
+    }
+
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    
+    try {
+      const patientDetails = await api.getPatientProfile(session.accessToken);
+      setState(prev => ({
+        ...prev,
+        patientDetails,
+        loading: false,
+        error: null
+      }));
+    } catch (error) {
+      console.error('Failed to load patient details:', error);
+      setState(prev => ({
+        ...prev,
+        loading: false,
+        error: 'Failed to load patient details'
+      }));
+    }
+  };
+
+  const loadTenantInfo = async () => {
+    if (!session.accessToken) {
+      console.log('No access token, skipping tenant info load');
+      return;
+    }
+
+    console.log('Loading tenant info with token:', session.accessToken ? 'Token present' : 'No token');
+    
+    try {
+      // First, debug what identity we have
+      const debugInfo = await api.debugTenantInfo(session.accessToken);
+      console.log('Debug info:', debugInfo);
       
-      return {
-        usersCount: users.length,
-        patientCount,
-        diagnosisCount,
-        utilization
-      };
+      // Then get the actual tenant info
+      const tenantInfo = await api.getCurrentTenant(session.accessToken);
+      console.log('Tenant info loaded:', tenantInfo);
+      setState(prev => ({
+        ...prev,
+        tenantInfo
+      }));
     } catch (error) {
-      console.error("Failed to load admin dashboard:", error);
-      throw new Error(`Failed to load dashboard: ${parseErrorMessage(error)}`);
+      console.error('Failed to load tenant info:', error);
+      console.error('Error details:', error.response?.data || error.message);
+      // Don't set error state for tenant info failure as it's not critical
     }
-  }
+  };
 
-  /**
-   * Registers a new user (admin function)
-   */
-  async function registerByAdmin(role: "DOCTOR" | "PATIENT" | "ADMIN", payload: any) {
-    try {
-      // Special case: Allow first admin registration without authentication
-      if (role === "ADMIN" && session.role === "GUEST") {
-        await api.registerAdmin({
-          fullName: payload.fullName,
-          email: payload.email,
-          password: payload.password,
-        });
-        return "Admin registration successful! Please login.";
-      }
-      
-      const result = await api.adminCreateUser(session.accessToken, payload);
-      await loadAdminDashboard();
-      return "Registration successful";
-    } catch (error) {
-      throw new Error(parseErrorMessage(error));
+  const clearUserData = () => {
+    setState({
+      users: [],
+      adminUsers: [],
+      reports: {},
+      patientDetails: null,
+      tenantInfo: null,
+      loading: false,
+      error: null
+    });
+  };
+
+  // Load users when session changes
+  useEffect(() => {
+    console.log('useUserData useEffect triggered:', { 
+      hasAccessToken: !!session.accessToken, 
+      role: session.role,
+      fullSession: session
+    });
+    
+    if (session.accessToken && session.role === 'ADMIN') {
+      loadUsers();
+    } else {
+      setState(prev => ({ ...prev, users: [], adminUsers: [] }));
     }
-  }
 
-  /**
-   * Gets doctor profile
-   */
-  async function getDoctorProfile() {
-    try {
-      return await api.getDoctorProfile(session.accessToken);
-    } catch (error) {
-      throw new Error(parseErrorMessage(error));
+    // Load tenant info for all authenticated users
+    if (session.accessToken) {
+      console.log('Calling loadTenantInfo...');
+      loadTenantInfo();
+    } else {
+      console.log('No access token found in session');
     }
-  }
-
-  /**
-   * Updates doctor profile
-   */
-  async function updateDoctorProfile(payload: any) {
-    try {
-      const result = await api.updateDoctorProfile(session.accessToken, payload);
-      await loadDoctorDetails(); // Refresh details after update
-      return result;
-    } catch (error) {
-      throw new Error(parseErrorMessage(error));
-    }
-  }
-
-  /**
-   * Gets patient profile
-   */
-  async function getPatientProfile() {
-    try {
-      return await api.getPatientProfile(session.accessToken);
-    } catch (error) {
-      throw new Error(parseErrorMessage(error));
-    }
-  }
-
-  /**
-   * Updates patient profile
-   */
-  async function updatePatientProfile(payload: any) {
-    try {
-      const result = await api.updatePatientProfile(session.accessToken, payload);
-      await loadPatientDetails(); // Refresh details after update
-      return result;
-    } catch (error) {
-      throw new Error(parseErrorMessage(error));
-    }
-  }
-
-  /**
-   * Clears all user data
-   */
-  function clearUserData() {
-    setPatientDetails(null);
-    setDoctorDetails(null);
-    setAdminDetails(null);
-    setAdminUsers([]);
-    setAdminReports({});
-  }
+  }, [session.accessToken, session.role]);
 
   return {
-    // State
-    patientDetails,
-    doctorDetails,
-    adminDetails,
-    adminUsers,
-    adminReports,
-    
-    // Actions
-    setPatientDetails,
-    setDoctorDetails,
-    setAdminDetails,
-    setAdminUsers,
-    setAdminReports,
-    
-    // API functions
-    loadPatientDetails,
-    loadDoctorDetails,
-    loadAdminDetails,
+    ...state,
+    loadUsers,
     loadAdminDashboard,
-    registerByAdmin,
-    getDoctorProfile,
-    updateDoctorProfile,
-    getPatientProfile,
-    updatePatientProfile,
-    clearUserData,
+    loadPatientDetails,
+    loadTenantInfo,
+    clearUserData
   };
 }

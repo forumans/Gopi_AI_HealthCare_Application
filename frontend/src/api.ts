@@ -296,13 +296,93 @@ export const api = {
       }),
     }),
 
-  registerAdmin: (payload: { fullName: string; email: string; password: string }) =>
-    request<{ message: string }>("/admin/register", {
+  registerAdmin: (payload: { fullName: string; email: string; password: string; phone?: string }, token?: string) =>
+    request<{ message: string }>("/admin/users", {
       method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
       body: JSON.stringify({
+        role: "ADMIN",
         full_name: payload.fullName,
         email: payload.email,
         password: payload.password,
+        phone: payload.phone || "",
+      }),
+    }),
+
+  registerPatientAdmin: (payload: { 
+    fullName: string; 
+    email: string; 
+    password: string; 
+    phone?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    addressLine1?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    insuranceProvider?: string;
+    insurancePolicyNumber?: string;
+  }, token?: string) =>
+    request<{ message: string }>("/admin/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({
+        role: "PATIENT",
+        full_name: payload.fullName,
+        email: payload.email,
+        password: payload.password,
+        phone: payload.phone || "",
+        date_of_birth: payload.dateOfBirth || null,
+        gender: payload.gender || null,
+        address_line1: payload.addressLine1 || "",
+        city: payload.city || "",
+        state: payload.state || "",
+        postal_code: payload.postalCode || "",
+        insurance_provider: payload.insuranceProvider || "",
+        insurance_policy_number: payload.insurancePolicyNumber || "",
+      }),
+    }),
+
+  registerDoctorAdmin: (payload: { 
+    fullName: string; 
+    email: string; 
+    password: string; 
+    phone?: string;
+    dateOfBirth?: string;
+    specialty?: string;
+    licenseNumber?: string;
+    gender?: string;
+    addressLine1?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+  }, token?: string) =>
+    request<{ message: string }>("/admin/users", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({
+        role: "DOCTOR",
+        full_name: payload.fullName,
+        email: payload.email,
+        password: payload.password,
+        phone: payload.phone || "",
+        date_of_birth: payload.dateOfBirth || null,
+        specialty: payload.specialty || "",
+        license_number: payload.licenseNumber || "",
+        gender: payload.gender || null,
+        address_line1: payload.addressLine1 || "",
+        city: payload.city || "",
+        state: payload.state || "",
+        postal_code: payload.postalCode || "",
       }),
     }),
 
@@ -316,6 +396,18 @@ export const api = {
     request<Array<{ slot_time: string; status: "AVAILABLE" | "BOOKED" | "BLOCKED" }>>(`/doctor/availability/${doctorId}/all?days=${30}`, {
       method: "GET",
       ...(token && { headers: withAuth(token) }),
+    }),
+
+  getCurrentTenant: (token: string) =>
+    request<{ id: string; name: string; domain?: string }>("/tenants/current", {
+      method: "GET",
+      headers: withAuth(token),
+    }),
+
+  debugTenantInfo: (token: string) =>
+    request<{ identity: { tenant_id: string; user_id: string; role: string } }>("/tenants/debug", {
+      method: "GET",
+      headers: withAuth(token),
     }),
 
   confirmAppointment: (appointmentId: string, token?: string) =>
@@ -438,5 +530,32 @@ export const api = {
     }).catch(error => {
       console.error('API: getPharmacies error:', error);
       throw error;
+    }),
+
+  // Admin Password Reset
+  resetUserPassword: (email: string, role: string, newPassword: string, token: string) =>
+    request<{ message: string; user_email: string; user_role: string; reset_by: string }>('/admin/reset-password', {
+      method: 'POST',
+      headers: withAuth(token),
+      body: JSON.stringify({ email, role, new_password: newPassword }),
+    }),
+
+  getResetPasswordRoles: (token: string) =>
+    request<Array<{ value: string; label: string }>>('/admin/roles', {
+      method: 'GET',
+      headers: withAuth(token),
+    }),
+
+  // Admin Dashboard APIs
+  getUsers: (token: string) =>
+    request<any[]>('/admin/users', {
+      method: 'GET',
+      headers: withAuth(token),
+    }),
+
+  getAdminReports: (token: string) =>
+    request<any>('/admin/reports', {
+      method: 'GET',
+      headers: withAuth(token),
     }),
 };

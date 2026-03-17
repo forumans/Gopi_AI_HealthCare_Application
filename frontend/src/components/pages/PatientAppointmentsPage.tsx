@@ -41,15 +41,16 @@ export function PatientAppointmentsPage({ auth, appointments, userData }: Patien
         await userData.loadPatientDetails();
         
         // Load doctors
-        api.listDoctors()
+        console.log('Loading doctors with token:', auth.session.accessToken ? 'Token present' : 'No token');
+        api.listDoctors(auth.session.accessToken)
           .then(data => {
+            console.log('Doctors loaded:', data);
             setDoctors(data);
-            // Auto-select first doctor if none is selected
-            if (data.length > 0 && !selectedDoctorId) {
-              setSelectedDoctorId(data[0].id);
-            }
           })
-          .catch(() => setDoctorsError("Failed to load doctors."));
+          .catch((error) => {
+            console.error('Failed to load doctors:', error);
+            setDoctorsError("Failed to load doctors.");
+          });
           
         // Load patient appointments
         if (auth.session.accessToken) {
@@ -252,7 +253,7 @@ export function PatientAppointmentsPage({ auth, appointments, userData }: Patien
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
             <div>
               <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>Name</label>
-              <p style={{ margin: '0', fontSize: '14px', color: '#e8f6ff' }}>{userData.patientDetails.name}</p>
+              <p style={{ margin: '0', fontSize: '14px', color: '#e8f6ff' }}>{userData.patientDetails.full_name}</p>
             </div>
             <div>
               <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>Phone</label>
@@ -261,7 +262,10 @@ export function PatientAppointmentsPage({ auth, appointments, userData }: Patien
             <div>
               <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>Insurance</label>
               <p style={{ margin: '0', fontSize: '14px', color: '#e8f6ff' }}>
-                {userData.patientDetails.insurance || 'Not specified'}
+                {userData.patientDetails.insurance_provider && userData.patientDetails.insurance_policy_number 
+                  ? `${userData.patientDetails.insurance_provider} - ${userData.patientDetails.insurance_policy_number}`
+                  : userData.patientDetails.insurance_provider || userData.patientDetails.insurance_policy_number || 'Not specified'
+                }
               </p>
             </div>
           </div>
@@ -281,11 +285,12 @@ export function PatientAppointmentsPage({ auth, appointments, userData }: Patien
             {/* Doctor Selection */}
             <div style={{ marginBottom: '16px' }}>
               <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>
-                Select Doctor
+                Select Doctor <span style={{ color: '#ff90ab' }}>*</span>
               </label>
               <select
                 value={selectedDoctorId || ''}
                 onChange={(e) => setSelectedDoctorId(e.target.value)}
+                required
                 style={{
                   width: '100%',
                   padding: '11px 12px',
@@ -296,7 +301,7 @@ export function PatientAppointmentsPage({ auth, appointments, userData }: Patien
                   color: '#eef8ff'
                 }}
               >
-                <option value="">Select a doctor...</option>
+                <option value="" disabled>Select a doctor</option>
                 {doctors.map(doctor => (
                   <option key={doctor.id} value={doctor.id}>
                     {doctor.name} - {doctor.specialty || 'General Practice'}

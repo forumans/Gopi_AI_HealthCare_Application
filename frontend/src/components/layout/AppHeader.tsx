@@ -14,10 +14,14 @@ import type { SessionState } from "../../types/app";
 interface AppHeaderProps {
   session: SessionState;
   onSignOut: () => void;
+  tenantInfo?: { name: string } | null;
 }
 
-export function AppHeader({ session, onSignOut }: AppHeaderProps) {
+export function AppHeader({ session, onSignOut, tenantInfo }: AppHeaderProps) {
   const navigate = useNavigate();
+  
+  console.log('AppHeader tenantInfo:', tenantInfo);
+  
   const { 
     navigationState, 
     submenuItems, 
@@ -31,9 +35,12 @@ export function AppHeader({ session, onSignOut }: AppHeaderProps) {
 
   const mainMenus: Array<"Home" | "Doctors" | "Patients" | "Admin"> = ["Home", "Doctors", "Patients", "Admin"];
 
+  const brandName = tenantInfo?.name || 'Peteti Software Inc';
+  console.log('AppHeader brandName:', brandName);
+
   return (
     <header className="topbar">
-      <div className="brand">HealthSphere</div>
+      <div className="brand">{brandName}</div>
       
       <nav className="top-nav-links">
         {mainMenus.map((menuName) => (

@@ -18,6 +18,7 @@ interface FieldErrors {
   password?: string;
   specialty?: string;
   licenseNumber?: string;
+  dateOfBirth?: string;
 }
 
 interface DoctorRegistrationPageProps {
@@ -34,6 +35,7 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
   const [password, setPassword] = useState("");
   const [specialty, setSpecialty] = useState("");
   const [licenseNumber, setLicenseNumber] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
 
@@ -41,6 +43,30 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
   useEffect(() => {
     setStatus("");
   }, [setStatus]);
+
+  // Function to validate that doctor is at least 18 years old
+  function validateDoctorAge(dateOfBirth: string): string | null {
+    if (!dateOfBirth) {
+      return "Date of birth is required.";
+    }
+    
+    const birthDate = new Date(dateOfBirth);
+    const today = new Date();
+    
+    // Calculate age
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    
+    if (age < 18) {
+      return `Doctor must be at least 18 years old. Current age: ${age}`;
+    }
+    
+    return null;
+  }
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -58,6 +84,12 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
     }
     if (password.length < 5) {
       nextErrors.password = "Password must be at least 5 characters.";
+    }
+    
+    // Validate doctor age (must be at least 18 years old)
+    const ageError = validateDoctorAge(dateOfBirth);
+    if (ageError) {
+      nextErrors.dateOfBirth = ageError;
     }
     
     setErrors(nextErrors);
@@ -159,6 +191,17 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
           helpText="Medical license number (optional)."
           value={licenseNumber}
           onChange={setLicenseNumber}
+          autoComplete="off"
+        />
+        
+        <LabeledField
+          id="doctor-date-of-birth"
+          label="Date of Birth"
+          helpText="Doctor must be at least 18 years old"
+          value={dateOfBirth}
+          onChange={setDateOfBirth}
+          type="date"
+          error={submitAttempted ? errors.dateOfBirth : undefined}
           autoComplete="off"
         />
         

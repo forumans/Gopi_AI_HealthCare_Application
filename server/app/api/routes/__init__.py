@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from .admin import router as admin_router
+from .admin_password_reset import router as admin_password_reset_router
 from .appointments import router as appointments_router
 from .audit_logs import router as audit_router
 from .auth import router as auth_router
@@ -27,4 +28,5 @@ api_router.include_router(appointments_router, tags=["appointments"])
 api_router.include_router(medical_records_router, tags=["medical-records"])
 api_router.include_router(prescriptions_router, tags=["prescriptions"])
 api_router.include_router(admin_router, tags=["admin"])
+api_router.include_router(admin_password_reset_router, prefix="/admin", tags=["admin-password-reset"])
 api_router.include_router(audit_router, tags=["audit-logs"])

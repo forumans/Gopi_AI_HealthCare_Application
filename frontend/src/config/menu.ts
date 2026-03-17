@@ -30,6 +30,7 @@ export const submenuMap: SubmenuMap = {
     { to: "/admin/register-patient", label: "Register Patient", requiresAuth: true, role: "ADMIN" },
     { to: "/admin/register-admin", label: "Register Admin", requiresAuth: true, role: "ADMIN" },
     { to: "/admin/system-dashboard", label: "System Dashboard", requiresAuth: true, role: "ADMIN" },
+    { to: "/admin/reset-password", label: "Reset Password", requiresAuth: true, role: "ADMIN" },
   ],
 };
 

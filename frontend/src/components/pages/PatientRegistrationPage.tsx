@@ -367,7 +367,6 @@ export function PatientRegistrationPage() {
             <button 
               type="submit" 
               disabled={loading}
-              tabIndex={0}
               style={{
                 flex: '1',
                 padding: '12px 24px',
@@ -387,7 +386,6 @@ export function PatientRegistrationPage() {
               type="button"
               onClick={() => navigate("/patients/login")}
               disabled={loading}
-              tabIndex={0}
               style={{
                 flex: '1',
                 padding: '12px 24px',

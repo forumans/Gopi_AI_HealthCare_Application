@@ -51,6 +51,18 @@ import {
   SystemDashboardPage 
 } from "./components/pages/SystemDashboardPage";
 import { 
+  AdminResetPasswordPage 
+} from "./components/pages/AdminResetPasswordPage";
+import { 
+  AdminRegistrationPage 
+} from "./components/pages/AdminRegistrationPage";
+import { 
+  AdminRegisterPatientPage 
+} from "./components/pages/AdminRegisterPatientPage";
+import { 
+  AdminRegisterDoctorPage 
+} from "./components/pages/AdminRegisterDoctorPage";
+import { 
   useAppointments, 
   useUserData, 
   useNavigation 
@@ -111,7 +123,7 @@ function AppContent() {
 
   return (
     <div className="app-shell">
-      <AppHeader session={auth.session} onSignOut={handleSignOut} />
+      <AppHeader session={auth.session} onSignOut={handleSignOut} tenantInfo={userData.tenantInfo} />
       
       <main className="content content-full">
         <Routes>
@@ -261,7 +273,7 @@ function AppContent() {
             element={
               <ProtectedRoute allowed={["ADMIN"]} role={auth.session.role}>
                 <AppLayout session={auth.session} status={auth.status}>
-                  <AdminRegisterDoctorPage auth={auth} userData={userData} />
+                  <AdminRegisterDoctorPage auth={auth} />
                 </AppLayout>
               </ProtectedRoute>
             } 
@@ -279,9 +291,11 @@ function AppContent() {
           <Route 
             path="/admin/register-admin" 
             element={
-              <AppLayout session={auth.session} status={auth.status}>
-                <AdminRegisterAdminPage auth={auth} userData={userData} />
-              </AppLayout>
+              <ProtectedRoute allowed={["ADMIN"]} role={auth.session.role}>
+                <AppLayout session={auth.session} status={auth.status}>
+                  <AdminRegistrationPage auth={auth} />
+                </AppLayout>
+              </ProtectedRoute>
             } 
           />
           <Route 
@@ -290,6 +304,16 @@ function AppContent() {
               <ProtectedRoute allowed={["ADMIN"]} role={auth.session.role}>
                 <AppLayout session={auth.session} status={auth.status}>
                   <SystemDashboardPage auth={auth} userData={userData} />
+                </AppLayout>
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/admin/reset-password" 
+            element={
+              <ProtectedRoute allowed={["ADMIN"]} role={auth.session.role}>
+                <AppLayout session={auth.session} status={auth.status}>
+                  <AdminResetPasswordPage auth={auth} />
                 </AppLayout>
               </ProtectedRoute>
             } 
@@ -345,14 +369,6 @@ function HomePage({ auth, userData }: any) {
 
 function BillingPage() {
   return <div>Billing Page - To be implemented</div>;
-}
-
-function AdminRegisterDoctorPage({ auth, userData }: any) {
-  return <div>Admin Register Doctor Page - To be implemented</div>;
-}
-
-function AdminRegisterPatientPage({ auth }: any) {
-  return <div>Admin Register Patient Page - To be implemented</div>;
 }
 
 function AdminRegisterAdminPage({ auth, userData }: any) {

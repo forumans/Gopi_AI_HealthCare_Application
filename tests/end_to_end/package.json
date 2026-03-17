@@ -1,0 +1,23 @@
+{
+  "name": "healthcare-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for Healthcare Application",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "install-browsers": "playwright install",
+    "test:patient": "playwright test patient_e2e.test.ts",
+    "test:doctor": "playwright test doctor_e2e.test.ts",
+    "test:admin": "playwright test admin_e2e.test.ts",
+    "test:all": "playwright test",
+    "setup-db": "powershell -ExecutionPolicy Bypass -File test-database-setup.ps1",
+    "cleanup-db": "psql -h localhost -p 5432 -U postgres -d healthcare_test -f test-cleanup.sql"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0"
+  }
+}

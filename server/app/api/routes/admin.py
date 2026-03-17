@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date, datetime
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -244,6 +244,8 @@ async def admin_create_user(
         )
         db.add(doctor)
     elif payload.role == "ADMIN":
+        print(f"Creating admin record for user_id: {user.id}")
+        print(f"Admin details - full_name: {payload.full_name}, phone: {payload.phone}")
         admin = Admin(
             tenant_id=identity.tenant_id,
             user_id=user.id,
@@ -251,8 +253,12 @@ async def admin_create_user(
             phone=payload.phone,
         )
         db.add(admin)
+        print("Admin record added to database session")
     
     await db.commit()
+    print(f"Database committed successfully. User ID: {user.id}, Role: {payload.role}")
+    if payload.role == "ADMIN":
+        print("Admin record should be created in admins table")
     return {"id": str(user.id)}
 
 

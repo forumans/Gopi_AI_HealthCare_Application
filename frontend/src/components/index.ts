@@ -13,6 +13,10 @@ export { AppHeader } from "./layout/AppHeader";
 export { AppLayout } from "./layout/AppLayout";
 
 // Page components
+export { AdminResetPasswordPage } from "./pages/AdminResetPasswordPage";
+export { AdminRegistrationPage } from "./pages/AdminRegistrationPage";
+export { AdminRegisterPatientPage } from "./pages/AdminRegisterPatientPage";
+export { AdminRegisterDoctorPage } from "./pages/AdminRegisterDoctorPage";
 export { ConsultationForm } from "./pages/ConsultationForm";
 export { PatientDetailsCard } from "./pages/PatientDetailsCard";
 export { LoginPage } from "./pages/LoginPage";
