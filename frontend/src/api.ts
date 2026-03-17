@@ -50,7 +50,9 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
       return undefined as T;
     }
     
-    return await response.json() as T;
+    const data = await response.json() as T;
+    console.log(`DEBUG: JSON response data for ${url}:`, data);
+    return data;
   } catch (error) {
     console.error(`Fetch error for ${url}:`, error);
     console.error("Error type:", error.constructor.name);
@@ -90,6 +92,9 @@ export const api = {
     request<LoginResponse>("/auth/login", {
       method: "POST",
       body: JSON.stringify(payload),
+    }).then(response => {
+      console.log('DEBUG: API login response:', response);
+      return response;
     }),
 
   forgotPassword: (email: string) =>
@@ -147,6 +152,12 @@ export const api = {
       headers: withAuth(token),
     }),
 
+  getDoctorMe: (token: string) =>
+    request<any>("/doctors/me", {
+      method: "GET",
+      headers: withAuth(token),
+    }),
+
   updateDoctorSlot: (token: string, payload: { slot: string; is_available: boolean }) =>
     request<{ message: string }>("/doctor/availability", {
       method: "POST",
@@ -184,6 +195,32 @@ export const api = {
       return response;
     }).catch(error => {
       console.error('API: patientPrescriptions error:', error);
+      throw error;
+    });
+  },
+
+  patientPrescriptionsFull: (token?: string) => {
+    console.log('API: Making patientPrescriptionsFull call to /patient/prescriptions-full');
+    console.log('API: Token available:', !!token);
+    return request<Array<{
+      appointment_time: string;
+      doctor_name: string;
+      appointment_status: string;
+      appointment_note: string;
+      symptoms: string;
+      diagnosis: string;
+      lab_results: string;
+      medication_details: string;
+      pharmacy_name: string;
+      appointment_created_at: string;
+    }>>('/patient/prescriptions-full', {
+      method: "GET",
+      headers: withAuth(token || ''),
+    }).then(response => {
+      console.log('API: patientPrescriptionsFull response:', response);
+      return response;
+    }).catch(error => {
+      console.error('API: patientPrescriptionsFull error:', error);
       throw error;
     });
   },
@@ -303,6 +340,7 @@ export const api = {
     patient_id: string;
     diagnosis: string;
     notes: string;
+    lab_results?: string;
   }, token?: string) =>
     request<{ id: string; message: string }>('/medical-records', {
       method: "POST",
@@ -383,5 +421,22 @@ export const api = {
       method: "PUT",
       headers: withAuth(token),
       body: JSON.stringify(payload),
+    }),
+
+  getPharmacies: (token?: string) =>
+    request<Array<{
+      id: string;
+      name: string;
+      address: string;
+      phone: string;
+    }>>('/prescriptions/pharmacies', {
+      method: "GET",
+      headers: withAuth(token || ''),
+    }).then(response => {
+      console.log('API: getPharmacies response:', response);
+      return response;
+    }).catch(error => {
+      console.error('API: getPharmacies error:', error);
+      throw error;
     }),
 };

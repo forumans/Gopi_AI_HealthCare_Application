@@ -65,12 +65,12 @@ def create_app() -> FastAPI:
         origin.strip()
         for origin in os.getenv(
             "CORS_ORIGINS",
-            "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:7860,http://localhost:7860",
+            "http://127.0.0.1:5173,http://localhost:5173",
         ).split(",")
         if origin.strip()
     ]
 
-    # CORS is required so browser clients (React/archived Gradio) can call FastAPI.
+    # CORS is required so browser clients (React) can call FastAPI.
     app.add_middleware(
         CORSMiddleware,
         allow_origins=cors_origins,

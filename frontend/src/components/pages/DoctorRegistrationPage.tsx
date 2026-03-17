@@ -1,0 +1,203 @@
+/**
+ * Doctor Registration Page Component
+ * Handles doctor registration with validation and API integration
+ * Follows the same patterns as the original SaaSApp SimpleRegisterPanel
+ */
+
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { api } from "../../api";
+import { useAuthContext } from "../../contexts/AuthContext";
+import { validateEmail, parseErrorMessage } from "../../utils";
+import { LabeledField } from "../common/LabeledField";
+
+interface FieldErrors {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  password?: string;
+  specialty?: string;
+  licenseNumber?: string;
+}
+
+interface DoctorRegistrationPageProps {
+  auth: any;
+}
+
+export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
+  const { status, setStatus } = useAuthContext();
+  const navigate = useNavigate();
+  
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [errors, setErrors] = useState<FieldErrors>({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+
+  // Clear any existing status messages when navigating to registration page
+  useEffect(() => {
+    setStatus("");
+  }, [setStatus]);
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitAttempted(true);
+    
+    const nextErrors: FieldErrors = {};
+    if (fullName.trim().length < 3) {
+      nextErrors.fullName = "Name must be at least 3 characters.";
+    }
+    if (!validateEmail(email)) {
+      nextErrors.email = "Please provide a valid email address.";
+    }
+    if (!/^\+?[0-9\-\s]{10,15}$/.test(phone)) {
+      nextErrors.phone = "Phone should be 10-15 digits.";
+    }
+    if (password.length < 5) {
+      nextErrors.password = "Password must be at least 5 characters.";
+    }
+    
+    setErrors(nextErrors);
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
+    
+    try {
+      const result = await api.registerDoctor({
+        fullName: fullName.trim(),
+        email: email.trim(),
+        phone: phone.trim(),
+        password: password,
+        specialty: specialty.trim() || undefined,
+        licenseNumber: licenseNumber.trim() || undefined,
+      });
+      
+      setStatus(result.message);
+      
+      // Navigate to login after successful registration
+      setTimeout(() => {
+        navigate("/doctors/login");
+      }, 2000);
+    } catch (error) {
+      setStatus(parseErrorMessage(error));
+    }
+  }
+
+  return (
+    <section style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <h2>Doctor Registration</h2>
+      <p style={{ color: '#b4cce2', marginBottom: '24px' }}>
+        Register as a healthcare provider to manage appointments and consultations
+      </p>
+      
+      {status && (
+        <div className="status" style={{ marginBottom: '20px', color: '#ff90ab', padding: '12px', backgroundColor: 'rgba(255, 144, 171, 0.1)', borderRadius: '4px', border: '1px solid rgba(255, 144, 171, 0.3)' }}>
+          {status}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="form-stack">
+        <LabeledField
+          id="doctor-full-name"
+          label="Full Name"
+          helpText="Name must be 3-80 characters."
+          value={fullName}
+          onChange={setFullName}
+          error={submitAttempted ? errors.fullName : undefined}
+          autoComplete="off"
+        />
+        
+        <LabeledField
+          id="doctor-email"
+          label="Email"
+          helpText="Use a valid email format, e.g., name@example.com."
+          value={email}
+          onChange={setEmail}
+          type="email"
+          placeholder="your.email@example.com"
+          error={submitAttempted ? errors.email : undefined}
+          autoComplete="off"
+        />
+        
+        <LabeledField
+          id="doctor-phone"
+          label="Phone"
+          helpText="Use 10-15 digits. Country code allowed."
+          value={phone}
+          onChange={setPhone}
+          error={submitAttempted ? errors.phone : undefined}
+          autoComplete="off"
+        />
+        
+        <LabeledField
+          id="doctor-password"
+          label="Password"
+          helpText="Minimum 5 characters."
+          value={password}
+          onChange={setPassword}
+          type="password"
+          placeholder="Enter your password"
+          error={submitAttempted ? errors.password : undefined}
+          autoComplete="new-password"
+        />
+        
+        <LabeledField
+          id="doctor-specialty"
+          label="Specialty"
+          helpText="Medical specialty (optional)."
+          value={specialty}
+          onChange={setSpecialty}
+          autoComplete="off"
+        />
+        
+        <LabeledField
+          id="doctor-license-number"
+          label="License Number"
+          helpText="Medical license number (optional)."
+          value={licenseNumber}
+          onChange={setLicenseNumber}
+          autoComplete="off"
+        />
+        
+        <button 
+          type="submit" 
+          className="button-primary"
+          style={{ 
+            padding: '12px 24px',
+            fontSize: '16px',
+            fontWeight: '500',
+            backgroundColor: '#42b5f5',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            cursor: 'pointer',
+            marginTop: '16px'
+          }}
+        >
+          Register
+        </button>
+      </form>
+      
+      <div style={{ textAlign: 'center', marginTop: '20px' }}>
+        <span style={{ color: '#b4cce2' }}>Already have an account? </span>
+        <button 
+          type="button"
+          onClick={() => navigate("/doctors/login")}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#42b5f5',
+            textDecoration: 'underline',
+            cursor: 'pointer',
+            fontSize: '14px'
+          }}
+        >
+          Sign In
+        </button>
+      </div>
+    </section>
+  );
+}

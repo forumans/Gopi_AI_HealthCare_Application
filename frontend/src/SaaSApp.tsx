@@ -2429,7 +2429,8 @@ function ConsultationPanel(props: { appointmentId: string; session: SessionState
         const medicalRecordResponse = await api.createMedicalRecord({
           patient_id: appointment.patient_id,
           diagnosis: diagnosis,
-          notes: symptoms || "No specific symptoms noted"
+          notes: symptoms || "No specific symptoms noted",
+          lab_results: labResults || null
         }, props.session.accessToken);
         console.log("Medical record created successfully");
         medicalRecordId = medicalRecordResponse.id;
@@ -3246,8 +3247,12 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
     const localTimeString = `${year.toString().padStart(4, '0')}-${(month).toString().padStart(2, '0')}-${date.toString().padStart(2, '0')}T${hour.toString().padStart(2, '0')}:00:00`;
     
     // Try to find the slot in different formats
-    const existingSlot = availability.find(a => a.slot_time === utcISOString) || 
-                         availability.find(a => a.slot_time === localTimeString);
+    const existingSlot = availability.find(a => {
+      // Normalize both to local time format for comparison
+      const slotTime = new Date(a.slot_time);
+      const slotTimeString = `${slotTime.getFullYear().toString().padStart(4, '0')}-${(slotTime.getMonth() + 1).toString().padStart(2, '0')}-${slotTime.getDate().toString().padStart(2, '0')}T${slotTime.getHours().toString().padStart(2, '0')}:00:00`;
+      return slotTimeString === localTimeString;
+    });
     
     try {
       if (existingSlot?.status === "BLOCKED") {
@@ -3257,7 +3262,7 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
           // User cancelled
           return;
         }
-        const response = await api.upsertDoctorAvailability(currentDoctor.id, utcISOString, true, props.session.accessToken, blockReason);
+        const response = await api.upsertDoctorAvailability(currentDoctor.id, localTimeString, true, props.session.accessToken, blockReason);
         setMessage("Slot unblocked successfully");
         setMessageType("success");
       } else if (existingSlot?.status === "AVAILABLE") {
@@ -3267,17 +3272,18 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
           // User cancelled
           return;
         }
-        const response = await api.upsertDoctorAvailability(currentDoctor.id, utcISOString, false, props.session.accessToken, blockReason);
+        const response = await api.upsertDoctorAvailability(currentDoctor.id, localTimeString, false, props.session.accessToken, blockReason);
         setMessage("Slot blocked successfully");
         setMessageType("success");
       } else {
         // Add the slot as available
-        const response = await api.upsertDoctorAvailability(currentDoctor.id, utcISOString, true, props.session.accessToken);
+        const response = await api.upsertDoctorAvailability(currentDoctor.id, localTimeString, true, props.session.accessToken);
         setMessage("Slot added successfully");
         setMessageType("success");
       }
       
-      // Refresh availability
+      // Refresh availability with a small delay to ensure backend processing
+      await new Promise(resolve => setTimeout(resolve, 500));
       await loadAvailability();
     } catch (error) {
       console.error("Failed to update slot:", error);
@@ -3341,7 +3347,7 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
                     let hour = parseInt(time);
                     if (period === "PM" && hour !== 12) hour += 12;
                     if (period === "AM" && hour === 12) hour = 0;
-                    return hour < today.getHours();
+                    return hour <= today.getHours(); // Changed from < to <= to include current hour
                   })());
                   
                   const isoString = `${col.year.toString().padStart(4, '0')}-${(col.month).toString().padStart(2, '0')}-${col.date.toString().padStart(2, '0')}T${(() => {
@@ -3352,7 +3358,12 @@ function DoctorManageAvailabilityPanel(props: { session: SessionState }) {
                     return hour.toString().padStart(2, '0');
                   })()}:00:00`;
                   
-                  const slotAvailability = availability.find(a => a.slot_time === isoString);
+                  const slotAvailability = availability.find(a => {
+      // Normalize both to local time format for comparison
+      const slotTime = new Date(a.slot_time);
+      const slotTimeString = `${slotTime.getFullYear().toString().padStart(4, '0')}-${(slotTime.getMonth() + 1).toString().padStart(2, '0')}-${slotTime.getDate().toString().padStart(2, '0')}T${slotTime.getHours().toString().padStart(2, '0')}:00:00`;
+      return slotTimeString === isoString;
+    });
                   const status = slotAvailability?.status || "EMPTY";
                   
                   return (

@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import and_, select
 from sqlalchemy.exc import IntegrityError
+from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.dependencies import CurrentIdentity, get_current_identity, require_roles
@@ -20,6 +21,7 @@ class CreateMedicalRecordRequest(BaseModel):
     patient_id: str
     diagnosis: str = Field(min_length=3)
     notes: str = Field(min_length=5)
+    lab_results: Optional[str] = None
 
 
 @router.post("/medical-records", status_code=status.HTTP_201_CREATED)
@@ -63,6 +65,7 @@ async def create_medical_record(
         appointment_id=appointment.id,
         diagnosis=payload.diagnosis.strip(),
         symptoms=payload.notes.strip(),
+        lab_results=payload.lab_results.strip() if payload.lab_results else None,
     )
     db.add(record)
 

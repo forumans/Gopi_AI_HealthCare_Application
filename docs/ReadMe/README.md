@@ -4,8 +4,8 @@
 # 2) Ensure backend points to healthcare_sas DB
 $env:DATABASE_URL="postgresql+asyncpg://healthcare_user:password@localhost/healthcare_saas"
 
-# 3) Allow React (and optional archived Gradio) origin
-$env:CORS_ORIGINS="http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:7860,http://localhost:7860"
+# 3) Allow React origin
+$env:CORS_ORIGINS="http://127.0.0.1:5173,http://localhost:5173"
 
 # 4) Start FastAPI
 python -m uvicorn server.app.main:app --host 127.0.0.1 --port 8000 --reload
@@ -23,9 +23,6 @@ npm run dev
 
 # 5.1) Frontend URL
 http://127.0.0.1:5173
-
-# 5.2) Optional archived Gradio UI source
-# Gradio code is archived under: Gradio_UI_Files/ui
 
 # 6) Test the connection to database
 python .\tests\db_connection_test.py

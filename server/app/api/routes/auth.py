@@ -1,4 +1,4 @@
-"""Authentication routes used by Gradio UI screens.
+"""Authentication routes used by the application.
 
 Implements:
 - POST /auth/register

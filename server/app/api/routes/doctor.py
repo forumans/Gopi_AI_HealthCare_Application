@@ -262,7 +262,7 @@ async def list_availability_next_30_days(
     doctor_id: str,
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
-    now = datetime.utcnow()
+    now = datetime.now()  # Use local time instead of UTC
     end_date = now + timedelta(days=30)
 
     stmt = (
@@ -339,7 +339,7 @@ async def list_all_availability(
     db: AsyncSession = Depends(get_db),
 ) -> list[dict]:
     """Get all availability (both available and booked) for a doctor."""
-    now = datetime.utcnow()
+    now = datetime.now()  # Use local time instead of UTC
     end_date = now + timedelta(days=days)
 
     # First check if doctor exists
@@ -896,29 +896,23 @@ async def upsert_doctor_availability(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Doctor profile not found.")
 
     try:
-        # Parse the ISO string and ensure it's in UTC
-        from datetime import timezone
-        slot_time_utc = datetime.fromisoformat(payload.slot)
-        if slot_time_utc.tzinfo is None:
-            # If no timezone info, assume it's UTC
-            slot_time_utc = slot_time_utc.replace(tzinfo=timezone.utc)
-        else:
-            # Convert to UTC
-            slot_time_utc = slot_time_utc.astimezone(timezone.utc)
+        # Parse the ISO string - it should be local time from frontend
+        slot_time = datetime.fromisoformat(payload.slot)
         
-        # Convert UTC back to local time for storage (EST/EDT)
-        # This ensures the database stores the local time the user selected
-        eastern_offset = -4  # EDT (Eastern Daylight Time)
-        slot_time_local = slot_time_utc + timedelta(hours=eastern_offset)
-        slot_time = slot_time_local.replace(tzinfo=None)
+        # Ensure it's timezone-naive (local time)
+        if slot_time.tzinfo is not None:
+            # Convert to naive local time by removing timezone info
+            slot_time = slot_time.replace(tzinfo=None)
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid slot timestamp.") from exc
 
-    now = datetime.utcnow()
-    # Compare UTC times for validation
-    if slot_time_utc.replace(tzinfo=None) < now:
+    # Get current local time for comparison
+    now = datetime.now()
+    
+    # Compare local times
+    if slot_time < now:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot update slots earlier than now.")
-    if slot_time_utc.replace(tzinfo=None) > now + timedelta(days=30):
+    if slot_time > now + timedelta(days=30):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot update slots beyond 30 days.")
 
     existing = (

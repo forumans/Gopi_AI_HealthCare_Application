@@ -7,7 +7,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from pydantic import BaseModel
-from sqlalchemy import and_, select
+from sqlalchemy import and_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.dependencies import CurrentIdentity, get_current_identity, require_roles
@@ -168,6 +168,59 @@ async def patient_prescriptions(
         }
         for appointment in rows
     ]
+
+
+@router.get("/prescriptions-full")
+async def patient_prescriptions_full(
+    identity: CurrentIdentity = Depends(require_roles("PATIENT")),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Get complete patient prescription data using custom SQL query"""
+    patient = await _current_patient(identity, db)
+    
+    # Execute the complete SQL query with all JOINs
+    query = text("""
+        SELECT
+            a.appointment_time,
+            d.full_name as doctor_name,
+            a.status as appointment_status,
+            a.notes as appointment_note,
+            mr.symptoms,
+            mr.diagnosis,
+            mr.lab_results,
+            pr.medication_details,
+            ph.name as pharmacy_name,
+            a.created_at as appointment_created_at
+        FROM appointments a
+        JOIN patients p ON a.patient_id = p.id
+        JOIN doctors d ON a.doctor_id = d.id
+        LEFT JOIN medical_records mr ON mr.appointment_id = a.id AND mr.deleted_at IS NULL
+        LEFT JOIN prescriptions pr ON pr.medical_record_id = mr.id AND pr.deleted_at IS NULL
+        LEFT JOIN pharmacies ph ON pr.pharmacy_id = ph.id AND ph.deleted_at IS NULL
+        WHERE p.id = :patient_id
+        AND a.status = 'COMPLETED'
+        AND a.deleted_at IS NULL
+        ORDER BY a.appointment_time DESC
+    """)
+    
+    result = await db.execute(query, {"patient_id": patient.id})
+    
+    prescriptions = []
+    for row in result:
+        prescriptions.append({
+            "appointment_time": row.appointment_time.isoformat() if row.appointment_time else None,
+            "doctor_name": row.doctor_name or "",
+            "appointment_status": row.appointment_status,
+            "appointment_note": row.appointment_note or "",
+            "symptoms": row.symptoms or "",
+            "diagnosis": row.diagnosis or "",
+            "lab_results": row.lab_results or "",
+            "medication_details": row.medication_details or "",
+            "pharmacy_name": row.pharmacy_name or "",
+            "appointment_created_at": row.appointment_created_at.isoformat() if row.appointment_created_at else None
+        })
+    
+    return prescriptions
 
 
 @router.patch("/profile")

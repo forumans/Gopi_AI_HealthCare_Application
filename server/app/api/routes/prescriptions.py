@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ...core.dependencies import CurrentIdentity, get_current_identity, require_roles
 from ...core.database import get_db
-from ...models import MedicalRecord, Prescription
+from ...models import MedicalRecord, Prescription, Pharmacy
 from ...services.audit_service import write_audit_log
 
 router = APIRouter(prefix="/prescriptions")
@@ -64,6 +64,38 @@ async def create_prescription(
     )
     await db.commit()
     return {"id": prescription.id}
+
+
+@router.get("/pharmacies")
+async def get_pharmacies(
+    identity: CurrentIdentity = Depends(require_roles("DOCTOR", "ADMIN", "PATIENT")),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict]:
+    """Get all pharmacies for the current tenant."""
+    try:
+        pharmacies = (
+            await db.execute(
+                select(Pharmacy).where(
+                    and_(
+                        Pharmacy.tenant_id == identity.tenant_id,
+                        Pharmacy.deleted_at.is_(None),
+                    )
+                )
+            )
+        ).scalars().all()
+        
+        return [
+            {
+                "id": str(pharmacy.id),  # Convert UUID to string
+                "name": pharmacy.name,
+                "address": pharmacy.address or "",
+                "phone": pharmacy.phone or "",
+            }
+            for pharmacy in pharmacies
+        ]
+    except Exception as e:
+        print(f"Error fetching pharmacies: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch pharmacies")
 
 
 @router.get("/{prescription_id}")
