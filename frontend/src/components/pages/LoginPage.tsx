@@ -7,6 +7,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { LabeledField } from "../common/LabeledField";
+import { StatusMessage } from "../common/StatusMessage";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { validateEmail } from "../../utils";
 import type { Role } from "../../types/app";
@@ -89,9 +90,20 @@ export function LoginPage({ role }: LoginPageProps) {
       </p>
       
       {status && (
-        <div className="status" style={{ marginBottom: '20px', color: '#ff90ab', padding: '12px', backgroundColor: 'rgba(255, 144, 171, 0.1)', borderRadius: '4px', border: '1px solid rgba(255, 144, 171, 0.3)' }}>
-          {status}
-        </div>
+        <StatusMessage 
+          message={status} 
+          type={
+            status.toLowerCase().includes('success') || 
+            status.toLowerCase().includes('successfully') || 
+            status.toLowerCase().includes('completed') ||
+            status.toLowerCase().includes('registered') ||
+            status.toLowerCase().includes('confirmed') ||
+            status.toLowerCase().includes('updated') ||
+            status.toLowerCase().includes('created')
+              ? 'success' 
+              : 'error'
+          } 
+        />
       )}
 
       <form onSubmit={handleSubmit} className="form-stack">

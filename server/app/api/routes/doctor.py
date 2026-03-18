@@ -79,6 +79,7 @@ class DoctorRegisterRequest(BaseModel):
     specialty: str | None = None
     license_number: str | None = None
     phone: str | None = None
+    date_of_birth: date | None = None
 
 
 @router.post("/doctors/register", status_code=status.HTTP_201_CREATED)
@@ -115,6 +116,7 @@ async def register_doctor(
         specialty=(payload.specialty or "").strip() or None,
         license_number=(payload.license_number or "").strip() or None,
         phone=(payload.phone or "").strip() or None,
+        date_of_birth=payload.date_of_birth,
     )
     db.add(doctor)
     try:

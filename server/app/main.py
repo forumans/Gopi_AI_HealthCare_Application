@@ -65,19 +65,10 @@ def create_app() -> FastAPI:
         origin.strip()
         for origin in os.getenv(
             "CORS_ORIGINS",
-            "http://127.0.0.1:5173,http://localhost:5173",
+            "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174",
         ).split(",")
         if origin.strip()
     ]
-
-    # CORS is required so browser clients (React) can call FastAPI.
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=cors_origins,
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
 
     app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(
@@ -88,6 +79,16 @@ def create_app() -> FastAPI:
         excluded_prefixes=(),
     )
     app.add_middleware(AuditContextMiddleware)
+    
+    # CORS is required so browser clients (React) can call FastAPI.
+    # Add CORS middleware last to ensure it handles all requests
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Temporary: allow all origins for testing
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
 
     @app.on_event("startup")
     async def startup() -> None:

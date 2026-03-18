@@ -283,18 +283,25 @@ export const api = {
       ...(token && { headers: withAuth(token) }),
     }),
 
-  registerDoctor: (payload: { fullName: string; email: string; password: string; specialty?: string; licenseNumber?: string; phone?: string }) =>
-    request<{ message: string }>("/doctors/register", {
-      method: "POST",
-      body: JSON.stringify({
+  registerDoctor: (payload: { fullName: string; email: string; password: string; specialty?: string; licenseNumber?: string; phone?: string; dateOfBirth?: string }) => {
+      const requestBody = {
         full_name: payload.fullName,
         email: payload.email,
         password: payload.password,
         specialty: payload.specialty,
         license_number: payload.licenseNumber,
         phone: payload.phone,
-      }),
-    }),
+        date_of_birth: payload.dateOfBirth,
+      };
+      
+      console.log("🔍 DEBUG: Doctor self-registration payload:", requestBody);
+      console.log("🔍 DEBUG: Phone field in doctor registration:", requestBody.phone);
+      
+      return request<{ message: string }>("/doctors/register", {
+        method: "POST",
+        body: JSON.stringify(requestBody),
+      });
+    },
 
   registerAdmin: (payload: { fullName: string; email: string; password: string; phone?: string }, token?: string) =>
     request<{ message: string }>("/admin/users", {
@@ -362,14 +369,8 @@ export const api = {
     city?: string;
     state?: string;
     postalCode?: string;
-  }, token?: string) =>
-    request<{ message: string }>("/admin/users", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-      body: JSON.stringify({
+  }, token?: string) => {
+      const requestBody = {
         role: "DOCTOR",
         full_name: payload.fullName,
         email: payload.email,
@@ -383,8 +384,20 @@ export const api = {
         city: payload.city || "",
         state: payload.state || "",
         postal_code: payload.postalCode || "",
-      }),
-    }),
+      };
+      
+      console.log("🔍 DEBUG: API request body to /admin/users:", requestBody);
+      console.log("🔍 DEBUG: Phone field in request:", requestBody.phone);
+      
+      return request<{ message: string }>("/admin/users", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(requestBody),
+      });
+    },
 
   listDoctorAvailabilityNext30Days: (doctorId: string, token?: string) =>
     request<Array<{ slot_time: string }>>(`/doctor/availability/${doctorId}/ndays`, {
@@ -495,12 +508,16 @@ export const api = {
       headers: withAuth(token),
     }),
 
-  updateDoctorProfile: (token: string, payload: any) =>
-    request<{ message: string }>(`/doctor/profile`, {
-      method: "PUT",
-      headers: withAuth(token),
-      body: JSON.stringify(payload),
-    }),
+  updateDoctorProfile: (token: string, payload: any) => {
+      console.log("🔍 DEBUG: Doctor profile update payload:", payload);
+      console.log("🔍 DEBUG: Phone field in profile update:", payload.phone);
+      
+      return request<{ message: string }>(`/doctor/profile`, {
+        method: "PUT",
+        headers: withAuth(token),
+        body: JSON.stringify(payload),
+      });
+    },
 
   getPatientProfile: (token: string) =>
     request<any>(`/patient/patient/profile`, {

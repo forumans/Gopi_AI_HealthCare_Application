@@ -155,7 +155,11 @@ export function AdminRegisterDoctorPage({ auth }: AdminRegisterDoctorPageProps) 
         dateOfBirth: dateOfBirth || undefined,
       };
       
+      console.log("🔍 DEBUG: Doctor registration payload:", payload);
+      console.log("🔍 DEBUG: Phone being sent:", payload.phone);
+      
       const result = await api.registerDoctorAdmin(payload, auth.session.accessToken);
+      console.log("🔍 DEBUG: Registration result:", result);
       
       // Check if result has message property
       if (result && result.message) {

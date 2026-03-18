@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
-from sqlalchemy import DateTime, ForeignKey, String, text
+from sqlalchemy import DateTime, Date, ForeignKey, String, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -22,4 +22,5 @@ class Doctor(Base, SoftDeleteMixin):
     specialty: Mapped[Optional[str]] = mapped_column(String(255))
     license_number: Mapped[Optional[str]] = mapped_column(String(100))
     phone: Mapped[Optional[str]] = mapped_column(String(20))
+    date_of_birth: Mapped[Optional[datetime]] = mapped_column(DateTime)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=text("CURRENT_TIMESTAMP"), nullable=False)

@@ -10,6 +10,7 @@ import { api } from "../../api";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { validateEmail, parseErrorMessage } from "../../utils";
 import { LabeledField } from "../common/LabeledField";
+import { StatusMessage } from "../common/StatusMessage";
 
 interface FieldErrors {
   fullName?: string;
@@ -38,10 +39,12 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [errors, setErrors] = useState<FieldErrors>({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [statusType, setStatusType] = useState<'success' | 'error'>('success');
 
   // Clear any existing status messages when navigating to registration page
   useEffect(() => {
     setStatus("");
+    setStatusType('success'); // Reset to default
   }, [setStatus]);
 
   // Function to validate that doctor is at least 18 years old
@@ -98,16 +101,24 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
     }
     
     try {
-      const result = await api.registerDoctor({
+      const payload = {
         fullName: fullName.trim(),
         email: email.trim(),
         phone: phone.trim(),
         password: password,
         specialty: specialty.trim() || undefined,
         licenseNumber: licenseNumber.trim() || undefined,
-      });
+        dateOfBirth: dateOfBirth || undefined,
+      };
+      
+      console.log("🔍 DEBUG: Doctor registration form payload:", payload);
+      console.log("🔍 DEBUG: Phone from form:", payload.phone);
+      
+      const result = await api.registerDoctor(payload);
+      console.log("🔍 DEBUG: Doctor registration result:", result);
       
       setStatus(result.message);
+      setStatusType('success'); // Success message
       
       // Navigate to login after successful registration
       setTimeout(() => {
@@ -115,6 +126,7 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
       }, 2000);
     } catch (error) {
       setStatus(parseErrorMessage(error));
+      setStatusType('error'); // Error message
     }
   }
 
@@ -126,9 +138,10 @@ export function DoctorRegistrationPage({ auth }: DoctorRegistrationPageProps) {
       </p>
       
       {status && (
-        <div className="status" style={{ marginBottom: '20px', color: '#ff90ab', padding: '12px', backgroundColor: 'rgba(255, 144, 171, 0.1)', borderRadius: '4px', border: '1px solid rgba(255, 144, 171, 0.3)' }}>
-          {status}
-        </div>
+        <StatusMessage 
+          message={status} 
+          type={statusType}
+        />
       )}
 
       <form onSubmit={handleSubmit} className="form-stack">
