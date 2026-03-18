@@ -363,7 +363,15 @@ function HomePage({ auth, userData }: any) {
                   {item.source}
                 </p>
                 <p>{item.summary}</p>
-                <a href={item.href} target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={item.href} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    window.open(item.href, '_blank', 'noopener,noreferrer');
+                  }}
+                >
                   Read more <span className="arrow">→</span>
                 </a>
               </article>
