@@ -46,3 +46,15 @@ $env:SMTP_USERNAME="pegopi@hotmail.com"
 $env:SMTP_PASSWORD="Gopikris27"
 $env:SMTP_FROM="GopiKrishna@example.com"
 
+# 9) Run the E2E tests
+cd test_healthcare_saas_app
+npx playwright test
+
+# 9.1) View test reports
+npx playwright show-report
+
+# 9.2) Run smoke tests (quick health checks)
+npm run test:smoke
+
+# 9.3) Run tests in UI mode (interactive)
+npm run test:ui

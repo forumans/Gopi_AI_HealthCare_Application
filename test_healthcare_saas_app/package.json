@@ -1,0 +1,54 @@
+{
+  "name": "test_healthcare_saas_app",
+  "version": "1.0.0",
+  "description": "Independent E2E test suite for Healthcare SaaS Application",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:codegen": "playwright codegen",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:install": "playwright install",
+    "test:clean": "playwright test --clean",
+    "test:project:chrome": "playwright test --project=chromium",
+    "test:project:firefox": "playwright test --project=firefox",
+    "test:project:safari": "playwright test --project=webkit",
+    "test:smoke": "playwright test --grep \"Smoke\"",
+    "test:critical": "playwright test --grep \"CRITICAL\"",
+    "test:auth": "playwright test --grep \"Authentication\"",
+    "test:admin": "playwright test --grep \"Admin\"",
+    "test:doctor": "playwright test --grep \"Doctor\"",
+    "test:patient": "playwright test --grep \"Patient\"",
+    "test:appointments": "playwright test --grep \"Appointment\"",
+    "test:consultation": "playwright test --grep \"Consultation\""
+  },
+  "keywords": [
+    "e2e",
+    "testing",
+    "playwright",
+    "healthcare",
+    "saas",
+    "automation"
+  ],
+  "author": "Healthcare Testing Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.8.0",
+    "playwright": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/healthcare/test-healthcare-saas-app.git"
+  },
+  "bugs": {
+    "url": "https://github.com/healthcare/test-healthcare-saas-app/issues"
+  },
+  "homepage": "https://github.com/healthcare/test-healthcare-saas-app#readme"
+}
