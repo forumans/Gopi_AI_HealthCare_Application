@@ -364,12 +364,13 @@ function HomePage({ auth, userData }: any) {
                 </p>
                 <p>{item.summary}</p>
                 <a 
-                  href={item.href} 
+                  href={`https://www.google.com/search?q=${encodeURIComponent(item.headline + ' ' + item.source)}`}
                   target="_blank" 
                   rel="noopener noreferrer"
                   onClick={(e) => {
                     e.preventDefault();
-                    window.open(item.href, '_blank', 'noopener,noreferrer');
+                    const searchQuery = encodeURIComponent(item.headline + ' ' + item.source);
+                    window.open(`https://www.google.com/search?q=${searchQuery}`, '_blank', 'noopener,noreferrer');
                   }}
                 >
                   Read more <span className="arrow">→</span>
