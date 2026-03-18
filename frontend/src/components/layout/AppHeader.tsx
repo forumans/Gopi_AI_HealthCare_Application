@@ -40,7 +40,23 @@ export function AppHeader({ session, onSignOut, tenantInfo }: AppHeaderProps) {
 
   return (
     <header className="topbar">
-      <div className="brand">{brandName}</div>
+      <div className="brand">
+        <div className="logo-container">
+          <div className="logo">
+            <div className="logo-icon">
+              <div className="heart-emoji-container">
+                <div className="heart-emoji">💖</div>
+                <div className="heart-glow"></div>
+                <div className="heart-shadow"></div>
+              </div>
+            </div>
+          </div>
+          <div className="brand-text">
+            <div className="brand-name">Peteti</div>
+            <div className="brand-tagline">Software Inc.</div>
+          </div>
+        </div>
+      </div>
       
       <nav className="top-nav-links">
         {mainMenus.map((menuName) => (
