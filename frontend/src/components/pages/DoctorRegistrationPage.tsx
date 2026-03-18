@@ -1,7 +1,7 @@
 /**
  * Doctor Registration Page Component
  * Handles doctor registration with validation and API integration
- * Follows the same patterns as the original SaaSApp SimpleRegisterPanel
+ * Provides a clean, modular interface for healthcare professional registration
  */
 
 import React, { useState, useEffect } from "react";

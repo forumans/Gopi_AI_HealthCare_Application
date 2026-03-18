@@ -569,6 +569,31 @@ input::placeholder {
   color: #93b6d0;
 }
 
+select {
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: #eef8ff;
+  font-family: "Plus Jakarta Sans", "Segoe UI", sans-serif;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgba(66, 181, 245, 0.22);
+}
+
+select option {
+  background: var(--panel);
+  color: #eef8ff;
+}
+
+select option:disabled,
+select option[value=""] {
+  color: #93b6d0;
+}
+
 .input-wrapper {
   position: relative;
   display: flex;

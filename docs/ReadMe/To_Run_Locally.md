@@ -8,9 +8,9 @@
 # Option B: Manual setup
 # Edit the .env file in the project root to set your database and other configurations
 # The .env file contains:
-# DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/healthcare_saas
-# TEST_DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/test_healthcare_db
-# CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
+#   DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/healthcare_saas
+#   TEST_DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/test_healthcare_db
+#   CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
 
 # 3) Allow React origin (automatically loaded from .env file)
 # $env:CORS_ORIGINS will be set from the .env file when the application starts

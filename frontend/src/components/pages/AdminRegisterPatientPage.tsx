@@ -315,13 +315,7 @@ export function AdminRegisterPatientPage({ auth }: AdminRegisterPatientPageProps
             <select 
               value={gender} 
               onChange={(e) => setGender(e.target.value)}
-              style={{
-                width: '100%',
-                padding: '8px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                fontSize: '14px'
-              }}
+              style={{ width: '100%' }}
             >
               <option value="">Select Gender</option>
               <option value="Male">Male</option>

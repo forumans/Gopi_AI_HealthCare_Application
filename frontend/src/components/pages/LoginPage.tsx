@@ -66,7 +66,7 @@ export function LoginPage({ role }: LoginPageProps) {
       return; // Email validation will be handled by the form
     }
     
-    // Validate password (same as original SaaSApp)
+    // Validate password (minimum 8 characters required)
     if (loginForm.password.length < 8) {
       console.log('🔍 DEBUG: Password validation failed');
       setStatus("Password must be at least 8 characters.");
