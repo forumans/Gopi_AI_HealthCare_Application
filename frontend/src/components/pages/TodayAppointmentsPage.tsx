@@ -9,6 +9,32 @@ import { Link } from "react-router-dom";
 import { api } from "../../api";
 import type { SessionState } from "../../types/app";
 
+interface EnhancedAppointment {
+  id: string;
+  time: string;
+  patient_name: string;
+  reason: string;
+  status: string;
+  patient_phone?: string;
+  patient_id?: string;
+}
+
+// Phone formatting function
+function formatPhoneNumber(phone: string): string {
+  if (!phone) return 'N/A';
+  // Remove all non-digit characters
+  const cleaned = phone.replace(/\D/g, '');
+  
+  // Format based on length
+  if (cleaned.length === 10) {
+    return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+  } else if (cleaned.length > 10) {
+    // Handle country code
+    return `+${cleaned.slice(0, cleaned.length - 10)} (${cleaned.slice(-10, -7)}) ${cleaned.slice(-7, -4)}-${cleaned.slice(-4)}`;
+  }
+  return phone; // Return original if can't format
+}
+
 interface TodayAppointmentsPageProps {
   auth: any;
   userData: any;
@@ -25,7 +51,6 @@ function DoctorDetails({ session, auth }: { session: SessionState; auth: any }) 
       try {
         // Use /doctor/profile endpoint to get complete doctor data (includes phone)
         const data = await api.getDoctorProfile(session.accessToken);
-        console.log('🔍 DEBUG: Doctor data from /doctor/profile:', data);
         setDoctorData(data);
       } catch (err) {
         console.error("Failed to load doctor data:", err);
@@ -51,7 +76,18 @@ function DoctorDetails({ session, auth }: { session: SessionState; auth: any }) 
           <strong>Name:</strong> {doctorData?.full_name || doctorData?.name || 'N/A'}
         </div>
         <div>
-          <strong>Phone:</strong> {doctorData?.phone || 'N/A'}
+          <strong>Phone:</strong> {
+            formatPhoneNumber(
+              doctorData?.phone || 
+              doctorData?.phone_number || 
+              doctorData?.phoneNumber || 
+              doctorData?.contact_phone || 
+              doctorData?.contactPhone || 
+              doctorData?.mobile || 
+              doctorData?.contact || 
+              ''
+            )
+          }
         </div>
         <div>
           <strong>Specialization:</strong> {doctorData?.specialty || 'N/A'}

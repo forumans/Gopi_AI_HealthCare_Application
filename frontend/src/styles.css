@@ -835,8 +835,18 @@ input[type="date"]::-webkit-calendar-picker-indicator {
   color: white;
 }
 
+/* Make calendar picker non-focusable for better tabbing */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  pointer-events: auto;
+}
+
 /* Style for date input when focused */
 input[type="date"]:focus::-webkit-calendar-picker-indicator {
   background-color: white;
   color: white;
+}
+
+/* Firefox - make calendar picker non-focusable */
+input[type="date"]::-moz-calendar-picker-indicator {
+  pointer-events: auto;
 }

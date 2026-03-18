@@ -10,6 +10,7 @@ import { api } from "../../api";
 import { useAuthContext } from "../../contexts/AuthContext";
 import { parseErrorMessage } from "../../utils";
 import { LabeledField } from "../common/LabeledField";
+import { StatusMessage } from "../common/StatusMessage";
 import type { SessionState } from "../../types/app";
 
 interface DoctorProfilePageProps {
@@ -44,6 +45,7 @@ export function DoctorProfilePage({ auth, userData }: DoctorProfilePageProps) {
     const loadDoctorData = async () => {
       try {
         const data = await api.getDoctorProfile(auth.session.accessToken);
+        
         setFullName(data.full_name || "");
         setPhone(data.phone || "");
         setSpecialty(data.specialty || "");
@@ -79,12 +81,14 @@ export function DoctorProfilePage({ auth, userData }: DoctorProfilePageProps) {
 
     setLoading(true);
     try {
-      await api.updateDoctorProfile(auth.session.accessToken, {
+      const updatePayload = {
         fullName: fullName.trim(),
         phone: phone.trim(),
         specialty: specialty.trim() || undefined,
         licenseNumber: licenseNumber.trim() || undefined
-      });
+      };
+      
+      await api.updateDoctorProfile(auth.session.accessToken, updatePayload);
       
       setStatus("Profile updated successfully!");
       setTimeout(() => {
@@ -108,16 +112,10 @@ export function DoctorProfilePage({ auth, userData }: DoctorProfilePageProps) {
       </p>
       
       {status && (
-        <div className="status" style={{ 
-          marginBottom: '20px', 
-          color: status.includes("success") ? '#49d7c2' : '#ff90ab', 
-          padding: '12px', 
-          backgroundColor: status.includes("success") ? 'rgba(73, 215, 194, 0.1)' : 'rgba(255, 144, 171, 0.1)', 
-          borderRadius: '4px', 
-          border: status.includes("success") ? '1px solid #49d7c2' : '1px solid rgba(255, 144, 171, 0.3)' 
-        }}>
-          {status}
-        </div>
+        <StatusMessage 
+          message={status} 
+          type={status.includes("success") ? 'success' : 'error'} 
+        />
       )}
 
       <form onSubmit={handleSubmit} className="form-stack">

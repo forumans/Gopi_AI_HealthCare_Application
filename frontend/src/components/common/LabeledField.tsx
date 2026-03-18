@@ -49,6 +49,7 @@ export function LabeledField(props: LabeledFieldProps) {
           <button
             type="button"
             className="password-toggle"
+            tabIndex={-1}
             onClick={() => setShowPassword(!showPassword)}
             aria-label={showPassword ? "Hide password" : "Show password"}
           >

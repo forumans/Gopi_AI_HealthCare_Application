@@ -7,6 +7,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../../api";
+import { StatusMessage } from "../common/StatusMessage";
 import type { SessionState } from "../../types/app";
 
 interface PatientProfilePageProps {
@@ -93,16 +94,41 @@ export function PatientProfilePage({ auth, userData }: PatientProfilePageProps) 
   const [loading, setLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   // Load current patient data on component mount
   useEffect(() => {
     const loadPatientData = async () => {
       try {
         const data = await api.getPatientProfile(auth.session.accessToken);
+        
         setFullName(data.full_name || "");
         setPhone(data.phone || "");
         setDateOfBirth(data.date_of_birth || "");
-        setGender(data.gender || "");
+        // Normalize gender value to match dropdown options
+        let normalizedGender = "";
+        if (data.gender) {
+          const genderLower = data.gender.toLowerCase();
+          switch (genderLower) {
+            case "male":
+              normalizedGender = "MALE";
+              break;
+            case "female":
+              normalizedGender = "FEMALE";
+              break;
+            case "other":
+              normalizedGender = "OTHER";
+              break;
+            case "prefer_not_to_say":
+            case "prefer not to say":
+              normalizedGender = "PREFER_NOT_TO_SAY";
+              break;
+            default:
+              // If it's already uppercase or unknown, use as-is
+              normalizedGender = data.gender.toUpperCase();
+          }
+        }
+        setGender(normalizedGender);
         setAddressLine1(data.address_line1 || "");
         setAddressLine2(data.address_line2 || "");
         setCity(data.city || "");
@@ -113,7 +139,7 @@ export function PatientProfilePage({ auth, userData }: PatientProfilePageProps) 
         setInsurancePolicyNumber(data.insurance_policy_number || "");
       } catch (error) {
         console.error("Failed to load patient profile:", error);
-        alert("Failed to load your profile. Please try again.");
+        setErrorMessage(error.message || "Failed to load profile");
       }
     };
 
@@ -156,7 +182,7 @@ export function PatientProfilePage({ auth, userData }: PatientProfilePageProps) 
 
     setLoading(true);
     try {
-      await api.updatePatientProfile(auth.session.accessToken, {
+      const updatePayload = {
         fullName: fullName.trim(),
         phone: phone.trim(),
         dateOfBirth: dateOfBirth || undefined,
@@ -169,7 +195,9 @@ export function PatientProfilePage({ auth, userData }: PatientProfilePageProps) 
         country: country || undefined,
         insuranceProvider: insuranceProvider.trim() || undefined,
         insurancePolicyNumber: insurancePolicyNumber.trim() || undefined
-      });
+      };
+      
+      await api.updatePatientProfile(auth.session.accessToken, updatePayload);
       
       setSuccessMessage("Profile updated successfully!");
       
@@ -195,16 +223,7 @@ export function PatientProfilePage({ auth, userData }: PatientProfilePageProps) 
       
       <div className="card" style={{ padding: '24px', maxWidth: '600px', margin: '0 auto' }}>
         {successMessage && (
-          <div style={{
-            padding: '12px',
-            marginBottom: '16px',
-            backgroundColor: '#1e40af',
-            color: 'white',
-            borderRadius: '8px',
-            textAlign: 'center'
-          }}>
-            {successMessage}
-          </div>
+          <StatusMessage message={successMessage} type="success" />
         )}
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
