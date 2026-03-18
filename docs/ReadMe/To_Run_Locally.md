@@ -10,7 +10,9 @@
 # The .env file contains:
 #   DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/healthcare_saas
 #   TEST_DATABASE_URL=postgresql+asyncpg://your_username:your_password@localhost/test_healthcare_db
-#   CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173
+#   CORS_ORIGINS=http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174
+#   JWT_SECRET=change-me-in-production
+#   JWT_ALGORITHM=HS256
 
 # 3) Allow React origin (automatically loaded from .env file)
 # $env:CORS_ORIGINS will be set from the .env file when the application starts
@@ -31,6 +33,7 @@ npm run dev
 
 # 5.1) Frontend URL
 http://127.0.0.1:5173
+# Note: The frontend now runs on port 5174 (not 5173) to avoid conflicts
 
 # 6) Test the connection to database
 python .\tests\db_connection_test.py
@@ -48,7 +51,7 @@ $env:SMTP_FROM="GopiKrishna@example.com"
 
 # 9) Run the E2E tests
 cd test_healthcare_saas_app
-npx playwright test
+npx playwright test --config=playwright.simple.config.ts
 
 # 9.1) View test reports
 npx playwright show-report
@@ -58,3 +61,14 @@ npm run test:smoke
 
 # 9.3) Run tests in UI mode (interactive)
 npm run test:ui
+
+# 9.4) Run specific test file
+npx playwright test --config=playwright.simple.config.ts tests/ui-registration-appointment-final.spec.ts
+
+# 9.5) Test Results
+# Expected: All 5 tests should pass with 100% success rate
+# - Doctor Registration Form Validations ✅
+# - Patient Registration Form Validations ✅  
+# - Doctor Registration Complete Flow ✅
+# - Patient Registration Complete Flow ✅
+# - Patient Appointment Booking Flow ✅

@@ -41,6 +41,8 @@ src/
 - **Purpose**: Reusable form field with label, validation, and password toggle
 - **Used in**: All forms throughout the application
 - **Props**: `id`, `label`, `helpText`, `value`, `onChange`, `type`, `placeholder`, `error`, `autoComplete`
+- **Important**: Use specific `id` attributes for testing (e.g., `id="doctor-full-name"`)
+- **Accessibility**: Password toggle has `tabIndex={-1}` for better keyboard navigation
 
 **ProtectedRoute.tsx**
 - **Purpose**: Route protection based on user roles
@@ -148,6 +150,32 @@ Components consume hooks via props
     ↓
 UI renders based on state and user actions
 ```
+
+## 🎯 Key Implementation Insights
+
+### **Form Testing Best Practices**
+- **Use Specific IDs**: Always use unique `id` attributes for form elements (e.g., `id="doctor-full-name"`)
+- **Avoid Generic Selectors**: Don't use CSS classes or nth-child selectors for testing
+- **Wait for URLs**: Use `page.waitForURL()` for login redirects
+- **Test Validation**: Test both empty form submission and successful submission
+
+### **Authentication Flow**
+- **Patient Login**: Redirects to `/patients/appointments` after successful login
+- **Doctor Login**: Redirects to `/doctors/today-appointments` after successful login
+- **Admin Login**: Redirects to `/admin/dashboard` after successful login
+- **Token Storage**: Uses React context, not localStorage for authentication tokens
+
+### **Component Accessibility**
+- **Password Fields**: Include `tabIndex={-1}` on toggle buttons for better keyboard navigation
+- **Form Labels**: Use `htmlFor` attributes to link labels with form inputs
+- **Error Messages**: Use StatusMessage component for consistent error display
+- **Calendar Pickers**: Enhanced styling for cross-browser compatibility
+
+### **API Integration**
+- **CORS Configuration**: Backend must allow frontend origins (ports 5173 and 5174)
+- **Error Handling**: Use try/catch blocks with proper error messages
+- **Data Validation**: Validate both on frontend and backend
+- **Authentication**: Include JWT tokens in Authorization headers
 
 ## 🎯 Benefits of This Architecture
 
