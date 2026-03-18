@@ -356,10 +356,16 @@ function HomePage({ auth, userData }: any) {
           ? Array.from({ length: 5 }).map((_, index) => <article className="skeleton-card" key={index} />)
           : newsQuery.data?.map((item) => (
               <article className="card" key={item.id}>
+                <div className="card-icon">🔬</div>
                 <h3>{item.headline}</h3>
-                <p className="muted">{item.source}</p>
+                <p className="muted">
+                  <span className="source-icon">📰</span>
+                  {item.source}
+                </p>
                 <p>{item.summary}</p>
-                <a href={item.href}>Read more</a>
+                <a href={item.href} target="_blank" rel="noopener noreferrer">
+                  Read more <span className="arrow">→</span>
+                </a>
               </article>
             ))}
       </div>
