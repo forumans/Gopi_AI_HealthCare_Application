@@ -184,18 +184,13 @@ async def admin_create_user(
     # Manually parse JSON body
     try:
         body = await request.json()
-        print(f"Received raw body: {body}")
-        print(f"Body type: {type(body)}")
     except Exception as e:
-        print(f"Failed to parse JSON: {e}")
         raise HTTPException(status_code=422, detail="Invalid JSON in request body")
     
     # Validate and create model
     try:
         payload = AdminCreateUserRequest(**body)
-        print(f"Parsed payload: {payload}")
     except Exception as e:
-        print(f"Validation error: {e}")
         raise HTTPException(status_code=422, detail="Invalid request format. Please check your input and try again.")
     
     # Hash password
@@ -241,11 +236,11 @@ async def admin_create_user(
             full_name=payload.full_name,
             specialty=payload.specialty,
             license_number=payload.license_number,
+            phone=payload.phone or None,
+            date_of_birth=payload.date_of_birth,
         )
         db.add(doctor)
     elif payload.role == "ADMIN":
-        print(f"Creating admin record for user_id: {user.id}")
-        print(f"Admin details - full_name: {payload.full_name}, phone: {payload.phone}")
         admin = Admin(
             tenant_id=identity.tenant_id,
             user_id=user.id,
@@ -253,12 +248,8 @@ async def admin_create_user(
             phone=payload.phone,
         )
         db.add(admin)
-        print("Admin record added to database session")
     
     await db.commit()
-    print(f"Database committed successfully. User ID: {user.id}, Role: {payload.role}")
-    if payload.role == "ADMIN":
-        print("Admin record should be created in admins table")
     return {"id": str(user.id)}
 
 

@@ -386,9 +386,7 @@ export const api = {
         postal_code: payload.postalCode || "",
       };
       
-      console.log("🔍 DEBUG: API request body to /admin/users:", requestBody);
-      console.log("🔍 DEBUG: Phone field in request:", requestBody.phone);
-      
+            
       return request<{ message: string }>("/admin/users", {
         method: "POST",
         headers: {
