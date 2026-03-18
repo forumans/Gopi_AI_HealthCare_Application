@@ -18,7 +18,7 @@ export default defineConfig({
     ['list']
   ],
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://localhost:5174',
     actionTimeout: 10000,
     navigationTimeout: 30000,
     trace: 'on-first-retry',
@@ -34,7 +34,7 @@ export default defineConfig({
       use: { 
         ...devices['Desktop Chrome']
       },
-      testMatch: '**/basic-health.spec.ts'
+      testMatch: '**/ui-registration-appointment-final.spec.ts'
     }
   ],
   testIgnore: [

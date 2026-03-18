@@ -32,7 +32,7 @@ export async function loginAsPatient(page: Page, email?: string, password?: stri
   await page.fill('input[type="email"]', patientEmail);
   await page.fill('input[type="password"]', patientPassword);
   await page.click('button[type="submit"]');
-  await page.waitForURL('/', { timeout: 10000 });
+  await page.waitForURL('/patients/appointments', { timeout: 10000 });
 }
 
 /**
