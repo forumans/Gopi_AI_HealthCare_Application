@@ -1,0 +1,85 @@
+"""Health check endpoints for AWS ECS/Fargate monitoring."""
+
+from fastapi import APIRouter
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
+from ..core.database import get_engine
+import logging
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter()
+
+@router.get("/health", tags=["health"])
+async def health_check():
+    """
+    Basic health check endpoint for AWS load balancer.
+    Returns service health and database connectivity status.
+    """
+    try:
+        # Test database connection
+        async with get_engine().begin() as conn:
+            await conn.execute(text("SELECT 1"))
+        
+        return {
+            "status": "healthy",
+            "service": "healthcare-backend",
+            "database": "connected",
+            "version": "1.0.0"
+        }
+    except SQLAlchemyError as e:
+        logger.error(f"Database health check failed: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "service": "healthcare-backend",
+            "database": "disconnected",
+            "error": "Database connection failed"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {str(e)}")
+        return {
+            "status": "unhealthy",
+            "service": "healthcare-backend",
+            "database": "unknown",
+            "error": "Service unavailable"
+        }
+
+@router.get("/health/ready", tags=["health"])
+async def readiness_check():
+    """
+    Detailed readiness check for Kubernetes/ECS readiness probes.
+    Checks all critical dependencies.
+    """
+    checks = {
+        "database": False,
+        "api": True
+    }
+    
+    try:
+        # Database check
+        async with get_engine().begin() as conn:
+            result = await conn.execute(text("SELECT 1"))
+            if result.scalar():
+                checks["database"] = True
+    except Exception as e:
+        logger.error(f"Readiness check failed: {str(e)}")
+    
+    all_healthy = all(checks.values())
+    
+    return {
+        "status": "ready" if all_healthy else "not_ready",
+        "checks": checks,
+        "service": "healthcare-backend"
+    }
+
+@router.get("/health/live", tags=["health"])
+async def liveness_check():
+    """
+    Liveness check for Kubernetes/ECS liveness probes.
+    Simple check to ensure the process is running.
+    """
+    return {
+        "status": "alive",
+        "service": "healthcare-backend",
+        "timestamp": "2026-03-20T18:00:00Z"
+    }

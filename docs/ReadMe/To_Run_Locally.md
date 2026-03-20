@@ -31,7 +31,7 @@ source .venv/bin/activate
 ### 3) Install Python Dependencies
 ```bash
 # Install required Python packages
-pip install -r server/requirements.txt
+pip install -r backend/requirements.txt
 
 # Verify installation
 pip list
@@ -130,7 +130,7 @@ asyncio.run(test_connection())
 # $env:CORS_ORIGINS will be set from the .env file when the application starts
 
 # 4) Start FastAPI
-python -m uvicorn server.app.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 
 # 4.1) FastAPI docs
 http://127.0.0.1:8000/docs
@@ -208,7 +208,7 @@ npx playwright test --config=playwright.simple.config.ts tests/ui-registration-a
 **Problem**: `ModuleNotFoundError: No module named 'fastapi'`
 **Solutions**:
 1. Activate virtual environment: `.\.venv\Scripts\Activate.ps1`
-2. Install dependencies: `pip install -r server/requirements.txt`
+2. Install dependencies: `pip install -r backend/requirements.txt`
 3. Verify Python version: `python --version`
 
 #### ❌ **Node.js Module Not Found**
@@ -222,7 +222,7 @@ npx playwright test --config=playwright.simple.config.ts tests/ui-registration-a
 **Problem**: `Port 8000 is already in use`
 **Solutions**:
 1. Kill existing process: `netstat -ano | findstr :8000`
-2. Use different port: `python -m uvicorn server.app.main:app --port 8001`
+2. Use different port: `python -m uvicorn backend.app.main:app --port 8001`
 3. Kill process ID: `taskkill /PID <PID> /F`
 
 #### ❌ **Environment Variables Not Loading**

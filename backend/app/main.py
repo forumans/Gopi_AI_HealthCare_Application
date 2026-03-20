@@ -23,6 +23,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import api_router
+from .api.health import router as health_router
 from .core.database import get_engine
 from .middleware import AuditContextMiddleware, SecurityHeadersMiddleware, TenantContextMiddleware
 from .models.base import Base
@@ -107,12 +108,7 @@ def create_app() -> FastAPI:
             raise
 
     app.include_router(api_router)
-
-    @app.get("/health")
-    async def health() -> dict[str, str]:
-        """Simple health endpoint used by orchestration probes."""
-
-        return {"status": "ok"}
+    app.include_router(health_router, prefix="/api")
 
     return app
 
