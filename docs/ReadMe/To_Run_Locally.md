@@ -136,7 +136,7 @@ python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 http://127.0.0.1:8000/docs
 
 # 4.2) FastAPI Health check
-http://127.0.0.1:8000/health
+http://127.0.0.1:8000/api/health
 
 # 5) Start React + TypeScript frontend
 cd frontend
@@ -145,10 +145,11 @@ npm run dev
 
 # 5.1) Frontend URL
 http://127.0.0.1:5173
-# Note: The frontend now runs on port 5174 (not 5173) to avoid conflicts
+# Note: Default Vite dev server port is 5173
 
 # 6) Test the connection to database
-python .\tests\db_connection_test.py
+cd ..
+python .\test_healthcare_saas_app\tests\db_connection_test.py
 
 # 7) JWT Settings
 $env:JWT_SECRET="change-me-in-production"
@@ -157,9 +158,9 @@ $env:JWT_ALGORITHM="HS256"
 # 8) SMTP Settings on Hotmail
 $env:SMTP_HOST="smtp-mail.outlook.com"
 $env:SMTP_PORT="587"
-$env:SMTP_USERNAME="pegopi@hotmail.com"
-$env:SMTP_PASSWORD="Gopikris27"
-$env:SMTP_FROM="GopiKrishna@example.com"
+$env:SMTP_USERNAME="your-email@example.com"
+$env:SMTP_PASSWORD="your-app-password"
+$env:SMTP_FROM="your-email@example.com"
 
 # 9) Run the E2E tests
 cd test_healthcare_saas_app

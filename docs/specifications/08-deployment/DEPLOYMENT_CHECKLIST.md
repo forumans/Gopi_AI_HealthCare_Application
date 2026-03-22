@@ -1,5 +1,7 @@
 # 🚀 AWS Deployment Checklist
 
+**Looking for a faster overview?** See: [QUICK_DEPLOYMENT_CHECKLIST.md](./QUICK_DEPLOYMENT_CHECKLIST.md)
+
 ## 📋 Pre-deployment Checklist
 
 ### ✅ AWS Account Setup
@@ -11,6 +13,7 @@
 
 ### ✅ Project Structure
 - [ ] Backend containerized with Dockerfile
+```text
 HealthCare_Application/
 ├── backend/                   # ✅ FastAPI Backend
 │   ├── app/
@@ -23,6 +26,7 @@ HealthCare_Application/
 │   ├── Dockerfile             # ✅ Production-ready container
 │   ├── requirements.txt       # ✅ Dependencies with AWS support
 │   └── .env.example           # ✅ Environment templates provided
+```
 - [ ] CI/CD workflows configured
 
 ### ✅ Security Configuration
