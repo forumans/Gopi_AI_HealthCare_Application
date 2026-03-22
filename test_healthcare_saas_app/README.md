@@ -4,8 +4,8 @@ Centralized test orchestration workspace for the Healthcare Application.
 
 ## What this project runs
 
-- Backend unit tests (`unittest` in `../backend/tests`)
-- Frontend unit tests (`vitest` in `../frontend/src`)
+- Backend unit tests (`unittest` in `../healthcare_saas_app/backend/tests`)
+- Frontend unit tests (`vitest` in `../healthcare_saas_app/frontend/src`)
 - Integration tests (`Playwright` in `tests/integration`)
 - End-to-end tests (`Playwright` in `tests/e2e`)
 
@@ -33,7 +33,7 @@ Start backend with the test DB URL (PowerShell):
 
 ```powershell
 $env:DATABASE_URL = "postgresql+asyncpg://test_user:password@localhost/test_healthcare_db"
-python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
+python -m uvicorn healthcare_saas_app.backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ## E2E admin credentials

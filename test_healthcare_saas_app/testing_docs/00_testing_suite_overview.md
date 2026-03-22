@@ -4,18 +4,18 @@ This document is the canonical testing strategy for the current codebase and sup
 
 ## Current Test Stack
 
-- **Backend unit tests**: Python `unittest` (under `backend/tests`)
-- **Frontend unit tests**: `vitest` (under `frontend/src`)
+- **Backend unit tests**: Python `unittest` (under `healthcare_saas_app/backend/tests`)
+- **Frontend unit tests**: `vitest` (under `healthcare_saas_app/frontend/src`)
 - **Integration tests (UI + backend contracts)**: Playwright project `integration`
 - **End-to-end tests (full user journey)**: Playwright project `e2e`
 - **Central test orchestrator**: `test_healthcare_saas_app/package.json`
 
 ## Repository Layout
 
-- `backend/tests/`
+- `healthcare_saas_app/backend/tests/`
   - `test_admin_appointment_metrics.py`
   - `test_auth_login.py`
-- `frontend/src/components/pages/`
+- `healthcare_saas_app/frontend/src/components/pages/`
   - `systemDashboardStats.ts`
   - `systemDashboardStats.test.ts`
 - `test_healthcare_saas_app/tests/integration/`

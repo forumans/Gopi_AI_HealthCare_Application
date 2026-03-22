@@ -13,13 +13,13 @@ This guide covers commits related to:
 ## Primary Files to Include
 
 ### Backend unit tests
-- `backend/tests/test_admin_appointment_metrics.py`
-- `backend/tests/test_auth_login.py`
+- `healthcare_saas_app/backend/tests/test_admin_appointment_metrics.py`
+- `healthcare_saas_app/backend/tests/test_auth_login.py`
 
 ### Frontend unit tests
-- `frontend/src/components/pages/systemDashboardStats.ts`
-- `frontend/src/components/pages/systemDashboardStats.test.ts`
-- `frontend/src/components/pages/SystemDashboardPage.tsx`
+- `healthcare_saas_app/frontend/src/components/pages/systemDashboardStats.ts`
+- `healthcare_saas_app/frontend/src/components/pages/systemDashboardStats.test.ts`
+- `healthcare_saas_app/frontend/src/components/pages/SystemDashboardPage.tsx`
 
 ### Central test project
 - `test_healthcare_saas_app/package.json`

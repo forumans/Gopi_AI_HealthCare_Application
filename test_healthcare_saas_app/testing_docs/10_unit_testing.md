@@ -5,7 +5,7 @@ Keep unit tests fast, deterministic, and independent from running services.
 
 ## Backend Unit Tests
 
-Location: `backend/tests`
+Location: `healthcare_saas_app/backend/tests`
 
 ### Current coverage
 - `test_admin_appointment_metrics.py`
@@ -17,12 +17,12 @@ Location: `backend/tests`
 
 ### Command
 ```bash
-python -m unittest ..\backend\tests\test_admin_appointment_metrics.py ..\backend\tests\test_auth_login.py
+python -m unittest ..\healthcare_saas_app\backend\tests\test_admin_appointment_metrics.py ..\healthcare_saas_app\backend\tests\test_auth_login.py
 ```
 
 ## Frontend Unit Tests
 
-Location: `frontend/src/components/pages`
+Location: `healthcare_saas_app/frontend/src/components/pages`
 
 ### Current coverage
 - `systemDashboardStats.test.ts`
@@ -31,7 +31,7 @@ Location: `frontend/src/components/pages`
 
 ### Command
 ```bash
-npm --prefix ../frontend run test -- src/components/pages/systemDashboardStats.test.ts
+npm --prefix ../healthcare_saas_app/frontend run test -- src/components/pages/systemDashboardStats.test.ts
 ```
 
 ## Unit Test Design Rules
