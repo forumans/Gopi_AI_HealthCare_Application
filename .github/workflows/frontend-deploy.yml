@@ -37,11 +37,11 @@ jobs:
       
     - name: Run type checking
       working-directory: ./frontend
-      run: npm run build -- --mode development --noEmit
+      run: npx tsc -b --pretty false
       
     - name: Run tests
       working-directory: ./frontend
-      run: npm test -- --coverage --watchAll=false
+      run: npm test -- --coverage
       
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

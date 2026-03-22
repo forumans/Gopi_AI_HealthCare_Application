@@ -4,12 +4,12 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::ACCOUNT-ID:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::ACCOUNT-ID:role/ecsTaskRole",
+  "executionRoleArn": "arn:aws:iam::697949337234:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::697949337234:role/ecsTaskRole",
   "containerDefinitions": [
     {
       "name": "healthcare-backend",
-      "image": "ACCOUNT-ID.dkr.ecr.us-east-1.amazonaws.com/healthcare-backend:latest",
+      "image": "697949337234.dkr.ecr.us-east-1.amazonaws.com/healthcare-backend:latest",
       "portMappings": [
         {
           "containerPort": 8000,
@@ -34,15 +34,15 @@
       "secrets": [
         {
           "name": "DATABASE_URL",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT-ID:secret:healthcare-db-url"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:697949337234:secret:healthcare-db-url-hHNZl1"
         },
         {
           "name": "JWT_SECRET",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT-ID:secret:healthcare-jwt-secret"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:697949337234:secret:healthcare-jwt-secret-2J04zj"
         },
         {
           "name": "CORS_ORIGINS",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:ACCOUNT-ID:secret:healthcare-cors-origins"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:697949337234:secret:healthcare-cors-origins-TkQsbD"
         }
       ],
       "logConfiguration": {
