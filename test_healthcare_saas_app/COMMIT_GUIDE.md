@@ -1,67 +1,54 @@
-# Git Commit Guide - Test Healthcare SaaS App
+# Git Commit Guide - Testing Architecture Refresh
 
-## 🎯 Files to Commit (Test Changes Only):
+## Scope
 
-### ✅ Modified Files (Safe to Commit):
-- `test_healthcare_saas_app/.gitignore` - Updated ignore rules
-- `test_healthcare_saas_app/playwright.simple.config.ts` - Test configuration
-- `test_healthcare_saas_app/tests/helpers.ts` - Updated login helper
+This guide covers commits related to:
 
-### ✅ New Files (Safe to Commit):
-- `test_healthcare_saas_app/PROJECT_STRUCTURE.md` - Project documentation
-- `test_healthcare_saas_app/tests/ui-registration-appointment-final.spec.ts` - Main test file
+- backend unit tests
+- frontend unit tests
+- integration tests
+- e2e tests
+- testing documentation under `test_healthcare_saas_app/testing_docs`
 
-## 🚫 Files to EXCLUDE from Commit:
+## Primary Files to Include
 
-### ❌ Frontend Changes (Should be separate commits):
-- `frontend/src/api.ts` - API changes
-- `frontend/src/components/common/LabeledField.tsx` - Component changes
-- `frontend/src/components/pages/*.tsx` - Page component changes
-- `frontend/src/styles.css` - Style changes
+### Backend unit tests
+- `backend/tests/test_admin_appointment_metrics.py`
+- `backend/tests/test_auth_login.py`
 
-### ❌ Server Changes (Should be separate commits):
-- `server/app/main.py` - CORS configuration
-- `server/app/api/routes/doctor.py` - Doctor API changes
-- `server/app/models/doctor.py` - Doctor model changes
-- `server/app/__pycache__/*.pyc` - Python cache files
+### Frontend unit tests
+- `frontend/src/components/pages/systemDashboardStats.ts`
+- `frontend/src/components/pages/systemDashboardStats.test.ts`
+- `frontend/src/components/pages/SystemDashboardPage.tsx`
 
-### ❌ Deleted Files:
-- `test_healthcare_saas_app/PROJECT_STATUS.md` - Old documentation
-- `test_healthcare_saas_app/README.md` - Old documentation
+### Central test project
+- `test_healthcare_saas_app/package.json`
+- `test_healthcare_saas_app/playwright.config.ts`
+- `test_healthcare_saas_app/tests/integration/*`
+- `test_healthcare_saas_app/tests/e2e/*`
+- `test_healthcare_saas_app/tests/legacy/*` (moves/archives)
+- `test_healthcare_saas_app/PROJECT_STRUCTURE.md`
 
-## 📝 Git Commands:
+### Testing docs
+- `test_healthcare_saas_app/testing_docs/00_testing_suite_overview.md`
+- `test_healthcare_saas_app/testing_docs/10_unit_testing.md`
+- `test_healthcare_saas_app/testing_docs/20_integration_testing.md`
+- `test_healthcare_saas_app/testing_docs/30_e2e_testing.md`
+- `test_healthcare_saas_app/testing_docs/40_test_execution_matrix.md`
+- `test_healthcare_saas_app/testing_docs/legacy/*` (archived strategy docs)
 
-### Option 1: Commit Only Test Changes
-```bash
-# Add only test-related files
-git add test_healthcare_saas_app/.gitignore
-git add test_healthcare_saas_app/playwright.simple.config.ts
-git add test_healthcare_saas_app/tests/helpers.ts
-git add test_healthcare_saas_app/PROJECT_STRUCTURE.md
-git add test_healthcare_saas_app/tests/ui-registration-appointment-final.spec.ts
+## Suggested Commit Message
 
-# Commit test changes
-git commit -m "feat: Clean up test project and add comprehensive UI test suite
-
-- Remove all debug and intermediate test files
-- Add comprehensive registration and appointment booking tests
-- Update gitignore for proper file exclusion
-- Add project structure documentation
-- All 5 tests passing with 100% success rate"
+```text
+test: restructure suites into unit/integration/e2e with updated docs
 ```
 
-### Option 2: Stash Non-Test Changes
-```bash
-# Stash non-test changes
-git stash push -m "frontend-and-server-changes" -- frontend/ server/
+## Suggested Commit Body
 
-# Add and commit test changes
-git add .
-git commit -m "feat: Clean up test project and add comprehensive UI test suite"
-
-# Optionally restore other changes later
-git stash pop
+```text
+- Add backend unit coverage for auth login and appointment metrics
+- Add frontend unit coverage for system dashboard stats mapping
+- Reorganize test_healthcare_saas_app into integration + e2e projects
+- Archive legacy Playwright tests under tests/legacy
+- Update testing specifications under test_healthcare_saas_app/testing_docs
 ```
-
-## 🎯 Recommendation:
-Use **Option 1** to commit only the test-related changes, keeping frontend and server changes separate for better commit history and code review.
