@@ -11,6 +11,7 @@ interface UserDataState {
   users: any[];
   adminUsers: any[];
   reports: any;
+  appointmentMetrics: any;
   patientDetails: any;
   tenantInfo: any;
   loading: boolean;
@@ -22,6 +23,7 @@ export function useUserData(session: SessionState) {
     users: [],
     adminUsers: [],
     reports: {},
+    appointmentMetrics: {},
     patientDetails: null,
     tenantInfo: null,
     loading: false,
@@ -61,19 +63,23 @@ export function useUserData(session: SessionState) {
     setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      // Load admin users and reports
-      const [adminUsers, reports] = await Promise.all([
+      // Load admin users, reports, and appointment metrics
+      const [adminUsers, reports, appointmentMetrics] = await Promise.all([
         api.getUsers(session.accessToken),
-        api.getAdminReports(session.accessToken)
+        api.getAdminReports(session.accessToken),
+        api.getAdminAppointmentMetrics(session.accessToken),
       ]);
       
       setState(prev => ({
         ...prev,
         adminUsers,
         reports,
+        appointmentMetrics,
         loading: false,
         error: null
       }));
+
+      return { adminUsers, reports, appointmentMetrics };
     } catch (error) {
       console.error('Failed to load admin dashboard:', error);
       setState(prev => ({
@@ -81,6 +87,8 @@ export function useUserData(session: SessionState) {
         loading: false,
         error: 'Failed to load admin dashboard'
       }));
+
+      return undefined;
     }
   };
 
@@ -141,6 +149,7 @@ export function useUserData(session: SessionState) {
       users: [],
       adminUsers: [],
       reports: {},
+      appointmentMetrics: {},
       patientDetails: null,
       tenantInfo: null,
       loading: false,

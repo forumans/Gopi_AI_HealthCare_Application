@@ -1,4 +1,5 @@
 import type {
+  AppointmentMetrics,
   AdminUserRow,
   AppointmentRow,
   DoctorAppointmentRow,
@@ -570,6 +571,12 @@ export const api = {
 
   getAdminReports: (token: string) =>
     request<any>('/admin/reports', {
+      method: 'GET',
+      headers: withAuth(token),
+    }),
+
+  getAdminAppointmentMetrics: (token: string) =>
+    request<AppointmentMetrics>('/admin/appointment-metrics', {
       method: 'GET',
       headers: withAuth(token),
     }),

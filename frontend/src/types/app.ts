@@ -4,6 +4,7 @@
  */
 
 import type { 
+  AppointmentMetrics,
   AdminUserRow, 
   AppointmentRow, 
   DoctorAppointmentRow, 
@@ -14,6 +15,7 @@ import type {
 
 // Re-export commonly used types from the main types file
 export type {
+  AppointmentMetrics,
   AdminUserRow,
   AppointmentRow,
   DoctorAppointmentRow,

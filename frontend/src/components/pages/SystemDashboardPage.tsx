@@ -5,8 +5,13 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { api } from "../../api";
-import type { SessionState, AdminUserRow } from "../../types/app";
+import type { AdminUserRow, AppointmentMetrics } from "../../types/app";
+import { useNavigate } from "react-router-dom";
+import {
+  buildSystemStats,
+  defaultAppointmentMetrics,
+  type SystemStats,
+} from "./systemDashboardStats";
 
 interface SystemDashboardPageProps {
   auth: any;
@@ -14,29 +19,31 @@ interface SystemDashboardPageProps {
 }
 
 export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [adminUsers, setAdminUsers] = useState<AdminUserRow[]>([]);
-  const [systemStats, setSystemStats] = useState({
+  const tenantName = userData.tenantInfo?.name || auth.session.tenantId || "-";
+  const [systemStats, setSystemStats] = useState<SystemStats>({
     totalDoctors: 0,
     totalPatients: 0,
-    totalAppointments: 0,
-    activeAppointments: 0
+    totalAppointmentsToDate: 0,
+    totalAppointmentsYearToDate: 0,
+    totalAppointmentsThisMonth: 0,
+    totalAppointmentsThisWeek: 0,
+    totalAppointmentsToday: 0,
   });
 
   useEffect(() => {
     const loadDashboardData = async () => {
       setLoading(true);
       try {
-        // Load admin users
-        await userData.loadAdminDashboard();
-        
-        // Load system statistics (mock data for now)
-        setSystemStats({
-          totalDoctors: 15,
-          totalPatients: 234,
-          totalAppointments: 1567,
-          activeAppointments: 89
-        });
+        const dashboardData = await userData.loadAdminDashboard();
+        const users: AdminUserRow[] = dashboardData?.adminUsers ?? userData.adminUsers ?? [];
+        const appointmentMetrics: AppointmentMetrics =
+          dashboardData?.appointmentMetrics ??
+          userData.appointmentMetrics ??
+          defaultAppointmentMetrics;
+
+        setSystemStats(buildSystemStats(users, appointmentMetrics));
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
       } finally {
@@ -68,9 +75,9 @@ export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps
             <p style={{ margin: '0', fontSize: '14px', color: '#e8f6ff' }}>Administrator</p>
           </div>
           <div>
-            <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>Tenant ID</label>
+            <label style={{ fontSize: '14px', fontWeight: '700', color: '#d6ebfb', display: 'block', marginBottom: '4px' }}>Tenant Name</label>
             <p style={{ margin: '0', fontSize: '14px', color: '#e8f6ff' }}>
-              {auth.session.tenantId}
+              {tenantName}
             </p>
           </div>
         </div>
@@ -100,15 +107,33 @@ export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps
               </div>
               <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'rgba(255, 144, 171, 0.1)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ff90ab', marginBottom: '8px' }}>
-                  {systemStats.totalAppointments}
+                  {systemStats.totalAppointmentsToDate}
                 </div>
-                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Total Appointments</div>
+                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Appointments (To Date)</div>
               </div>
               <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'rgba(255, 193, 7, 0.1)', borderRadius: '8px' }}>
                 <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffc107', marginBottom: '8px' }}>
-                  {systemStats.activeAppointments}
+                  {systemStats.totalAppointmentsYearToDate}
                 </div>
-                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Active Today</div>
+                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Appointments YTD</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'rgba(181, 66, 245, 0.1)', borderRadius: '8px' }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#b542f5', marginBottom: '8px' }}>
+                  {systemStats.totalAppointmentsThisMonth}
+                </div>
+                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Appointments This Month</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'rgba(66, 245, 166, 0.1)', borderRadius: '8px' }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#42f5a6', marginBottom: '8px' }}>
+                  {systemStats.totalAppointmentsThisWeek}
+                </div>
+                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Appointments This Week</div>
+              </div>
+              <div style={{ textAlign: 'center', padding: '20px', backgroundColor: 'rgba(245, 129, 66, 0.1)', borderRadius: '8px' }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#f58142', marginBottom: '8px' }}>
+                  {systemStats.totalAppointmentsToday}
+                </div>
+                <div style={{ fontSize: '14px', color: '#b4cce2', textTransform: 'uppercase' }}>Appointments Today</div>
               </div>
             </div>
           </div>
@@ -118,7 +143,7 @@ export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps
             <h3 style={{ margin: '0 0 16px 0', color: '#eaf5ff' }}>Quick Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '12px' }}>
               <button
-                onClick={() => window.location.href = '/admin/register-doctor'}
+                onClick={() => navigate('/admin/register-doctor')}
                 style={{
                   background: '#42b5f5',
                   color: 'white',
@@ -133,7 +158,7 @@ export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps
                 Register New Doctor
               </button>
               <button
-                onClick={() => window.location.href = '/admin/register-patient'}
+                onClick={() => navigate('/admin/register-patient')}
                 style={{
                   background: '#49d7c2',
                   color: 'white',
@@ -148,7 +173,7 @@ export function SystemDashboardPage({ auth, userData }: SystemDashboardPageProps
                 Register New Patient
               </button>
               <button
-                onClick={() => window.location.href = '/admin/register-admin'}
+                onClick={() => navigate('/admin/register-admin')}
                 style={{
                   background: '#ff90ab',
                   color: 'white',

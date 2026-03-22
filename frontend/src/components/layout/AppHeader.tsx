@@ -19,8 +19,8 @@ interface AppHeaderProps {
 
 export function AppHeader({ session, onSignOut, tenantInfo }: AppHeaderProps) {
   const navigate = useNavigate();
-  
-  console.log('AppHeader tenantInfo:', tenantInfo);
+  const tenantDisplayName = tenantInfo?.name?.trim() ?? "";
+  const showTenantName = session.role !== "GUEST" && tenantDisplayName.length > 0;
   
   const { 
     navigationState, 
@@ -34,9 +34,6 @@ export function AppHeader({ session, onSignOut, tenantInfo }: AppHeaderProps) {
   const breadcrumb = getRouteBreadcrumb(window.location.pathname);
 
   const mainMenus: Array<"Home" | "Doctors" | "Patients" | "Admin"> = ["Home", "Doctors", "Patients", "Admin"];
-
-  const brandName = tenantInfo?.name || 'Peteti Software Inc';
-  console.log('AppHeader brandName:', brandName);
 
   return (
     <header className="topbar">
@@ -57,6 +54,12 @@ export function AppHeader({ session, onSignOut, tenantInfo }: AppHeaderProps) {
           </div>
         </div>
       </div>
+
+      {showTenantName && (
+        <div className="topbar-tenant-name" title={tenantDisplayName}>
+          {tenantDisplayName}
+        </div>
+      )}
       
       <nav className="top-nav-links">
         {mainMenus.map((menuName) => (
