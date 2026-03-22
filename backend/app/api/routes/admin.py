@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
-from sqlalchemy import and_, func, select, update
+from sqlalchemy import and_, case, func, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,21 @@ from ...models import Admin, Appointment, Doctor, MedicalRecord, Patient, User
 from ...services.audit_service import write_audit_log
 
 router = APIRouter(prefix="/admin")
+
+
+def _appointment_window_starts(now: datetime) -> dict[str, datetime]:
+    """Return normalized UTC window starts used for dashboard metrics."""
+
+    start_of_today = datetime.combine(now.date(), datetime.min.time())
+    start_of_week = start_of_today - timedelta(days=start_of_today.weekday())
+    start_of_month = start_of_today.replace(day=1)
+    start_of_year = start_of_today.replace(month=1, day=1)
+    return {
+        "today": start_of_today,
+        "week": start_of_week,
+        "month": start_of_month,
+        "year": start_of_year,
+    }
 
 
 @router.get("/users")
@@ -149,6 +164,46 @@ async def admin_reports(
         "monthly_patient_count": int(monthly_patient_count or 0),
         "diagnosis_frequency": int(diagnosis_frequency or 0),
         "doctor_utilization_rate": utilization,
+    }
+
+
+@router.get("/appointment-metrics")
+async def admin_appointment_metrics(
+    identity: CurrentIdentity = Depends(require_roles("ADMIN")),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return aggregate appointment totals for dashboard time ranges."""
+
+    now = datetime.now(UTC).replace(tzinfo=None)
+    windows = _appointment_window_starts(now)
+
+    stmt = select(
+        func.count(Appointment.id).label("total_appointments_to_date"),
+        func.sum(
+            case((Appointment.appointment_time >= windows["year"], 1), else_=0)
+        ).label("total_appointments_year_to_date"),
+        func.sum(
+            case((Appointment.appointment_time >= windows["month"], 1), else_=0)
+        ).label("total_appointments_this_month"),
+        func.sum(
+            case((Appointment.appointment_time >= windows["week"], 1), else_=0)
+        ).label("total_appointments_this_week"),
+        func.sum(
+            case((Appointment.appointment_time >= windows["today"], 1), else_=0)
+        ).label("total_appointments_today"),
+    ).where(
+        Appointment.tenant_id == identity.tenant_id,
+        Appointment.deleted_at.is_(None),
+        Appointment.appointment_time <= now,
+    )
+
+    result = (await db.execute(stmt)).mappings().one()
+    return {
+        "total_appointments_to_date": int(result.get("total_appointments_to_date") or 0),
+        "total_appointments_year_to_date": int(result.get("total_appointments_year_to_date") or 0),
+        "total_appointments_this_month": int(result.get("total_appointments_this_month") or 0),
+        "total_appointments_this_week": int(result.get("total_appointments_this_week") or 0),
+        "total_appointments_today": int(result.get("total_appointments_today") or 0),
     }
 
 
