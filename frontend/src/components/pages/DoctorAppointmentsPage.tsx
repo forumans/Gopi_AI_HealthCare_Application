@@ -18,20 +18,28 @@ function DoctorDetails({ session, style }: { session: SessionState; style?: Reac
   const [currentDoctor, setCurrentDoctor] = useState<any>(null);
   
   React.useEffect(() => {
-    if (session.accessToken) {
-      fetch('http://127.0.0.1:8000/doctors/me', {
-        headers: {
-          'Authorization': `Bearer ${session.accessToken}`
-        }
-      })
-      .then(response => response.json())
-      .then(doctor => {
-        setCurrentDoctor(doctor);
-      })
-      .catch(error => {
-        console.error("Failed to fetch current doctor:", error);
-      });
+    if (!session.accessToken) {
+      return;
     }
+
+    let isMounted = true;
+
+    const loadCurrentDoctor = async () => {
+      try {
+        const doctor = await api.getDoctorMe(session.accessToken);
+        if (isMounted) {
+          setCurrentDoctor(doctor);
+        }
+      } catch (error) {
+        console.error("Failed to fetch current doctor:", error);
+      }
+    };
+
+    loadCurrentDoctor();
+
+    return () => {
+      isMounted = false;
+    };
   }, [session.accessToken]);
 
   if (!currentDoctor) {

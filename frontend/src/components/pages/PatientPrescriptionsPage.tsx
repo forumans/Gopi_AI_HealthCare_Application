@@ -16,7 +16,7 @@ interface PatientPrescriptionsPageProps {
 
 interface PrescriptionRecord {
   appointment_time: string;
-  patient_name: string;
+  patient_name?: string;
   doctor_name: string;
   appointment_status: string;
   appointment_note: string;
@@ -26,7 +26,7 @@ interface PrescriptionRecord {
   medication_details: string;
   pharmacy_name: string;
   appointment_created_at: string;
-  status: string;
+  status?: string;
 }
 
 export function PatientPrescriptionsPage({ auth }: PatientPrescriptionsPageProps) {
