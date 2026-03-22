@@ -76,7 +76,20 @@ def create_app() -> FastAPI:
         TenantContextMiddleware,
         secret_key=jwt_secret,
         algorithm=jwt_algorithm,
-        excluded_paths={"/health", "/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password", "/doctors", "/doctors/register", "/admin/register", "/doctor/availability/{doctor_id}/ndays"},
+        excluded_paths={
+            "/health",
+            "/api/health",
+            "/api/health/ready",
+            "/api/health/live",
+            "/auth/login",
+            "/auth/register",
+            "/auth/forgot-password",
+            "/auth/reset-password",
+            "/doctors",
+            "/doctors/register",
+            "/admin/register",
+            "/doctor/availability/{doctor_id}/ndays",
+        },
         excluded_prefixes=(),
     )
     app.add_middleware(AuditContextMiddleware)
@@ -85,7 +98,7 @@ def create_app() -> FastAPI:
     # Add CORS middleware last to ensure it handles all requests
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Temporary: allow all origins for testing
+        allow_origins=cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

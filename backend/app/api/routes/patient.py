@@ -272,7 +272,7 @@ async def upload_patient_document(
     db: AsyncSession = Depends(get_db),
 ) -> dict:
     patient = await _current_patient(identity, db)
-    uploads_dir = Path("server/uploads")
+    uploads_dir = Path("backend/uploads")
     uploads_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")

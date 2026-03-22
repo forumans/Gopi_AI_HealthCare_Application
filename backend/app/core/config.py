@@ -10,8 +10,14 @@ import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
-load_dotenv()
+# Load environment variables with explicit precedence:
+# 1) .env (base defaults)
+# 2) .env.local (developer/local overrides)
+# 3) .env.test (test-only overrides when APP_ENV=test)
+load_dotenv(".env", override=False)
+load_dotenv(".env.local", override=True)
+if os.getenv("APP_ENV", "").lower() == "test":
+    load_dotenv(".env.test", override=True)
 
 
 @dataclass(frozen=True)

@@ -42,7 +42,7 @@ async def create_document(
     if patient is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Patient not found.")
 
-    uploads_dir = Path("server/uploads")
+    uploads_dir = Path("backend/uploads")
     uploads_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d%H%M%S")
