@@ -4,12 +4,12 @@ on:
   push:
     branches: [ main, master ]
     paths:
-      - 'frontend/**'
-      - '.github/workflows/frontend-deploy.yml'
+      - 'healthcare_saas_app/frontend/**'
+      - 'healthcare_saas_app/.github/workflows/frontend-deploy.yml'
   pull_request:
     branches: [ main, master ]
     paths:
-      - 'frontend/**'
+      - 'healthcare_saas_app/frontend/**'
 
 env:
   NODE_VERSION: '18'
@@ -29,24 +29,24 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+        cache-dependency-path: healthcare_saas_app/frontend/package-lock.json
         
     - name: Install dependencies
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: npm ci
       
     - name: Run type checking
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: npx tsc -b --pretty false
       
     - name: Run tests
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: npm test -- --coverage
       
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
-        file: ./frontend/coverage/lcov.info
+        file: ./healthcare_saas_app/frontend/coverage/lcov.info
         flags: frontend
         name: codecov-umbrella
 
@@ -64,7 +64,7 @@ jobs:
       with:
         node-version: ${{ env.NODE_VERSION }}
         cache: 'npm'
-        cache-dependency-path: frontend/package-lock.json
+        cache-dependency-path: healthcare_saas_app/frontend/package-lock.json
         
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v4
@@ -74,15 +74,15 @@ jobs:
         aws-region: us-east-1
         
     - name: Install dependencies
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: npm ci
       
     - name: Build React application
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: npm run build
       
     - name: Deploy to S3
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: |
         aws s3 sync dist/ s3://$S3_BUCKET/ \
           --delete \
@@ -90,7 +90,7 @@ jobs:
           --exclude "Thumbs.db"
           
     - name: Set cache headers for static assets
-      working-directory: ./frontend
+      working-directory: ./healthcare_saas_app/frontend
       run: |
         # HTML files - no cache
         aws s3 cp dist/ s3://$S3_BUCKET/ \

@@ -30,38 +30,32 @@ This guide provides a complete step-by-step process for deploying the Healthcare
 
 ```
 HealthCare_Application/
-├── backend/                   # ✅ FastAPI Backend
-│   ├── app/
-│   │   ├── api/               # API routes + health checks
-│   │   ├── core/              # Config, security, AWS secrets
-│   │   ├── models/            # Database models
-│   │   ├── services/          # Business logic
-│   │   ├── middleware/        # Custom middleware
-│   │   └── main.py            # FastAPI entrypoint
-│   ├── Dockerfile             # ✅ Production-ready container
-│   ├── requirements.txt       # ✅ Dependencies with AWS support
-│   └── .env.example           # ✅ Environment template
-├── frontend/                  # ✅ React Frontend
-│   ├── src/
-│   ├── dist/                  # Build output
-│   ├── vite.config.ts         # ✅ Production optimized
-│   └── .env.example           # ✅ Environment template
-├── infrastructure/            # ✅ AWS Deployment Scripts
-│   ├── ecs/
-│   │   └── task-definition.json
-│   ├── ecr/
-│   │   └── build-and-push.sh
-│   ├── s3/
-│   │   └── deploy-frontend.sh
-│   ├── alb/
-│   │   └── application-load-balancer.json
-│   ├── security/
-│   │   └── security-groups.json
-│   └── rds/
-├── .github/workflows/         # ✅ CI/CD Pipelines
-│   ├── backend-deploy.yml
-│   └── frontend-deploy.yml
-└── docs/                      # ✅ Documentation
+├── healthcare_saas_app/
+│   ├── backend/               # ✅ FastAPI Backend
+│   │   ├── app/
+│   │   │   ├── api/           # API routes + health checks
+│   │   │   ├── core/          # Config, security, AWS secrets
+│   │   │   ├── models/        # Database models
+│   │   │   ├── services/      # Business logic
+│   │   │   ├── middleware/    # Custom middleware
+│   │   │   └── main.py        # FastAPI entrypoint
+│   │   ├── Dockerfile         # ✅ Production-ready container
+│   │   └── requirements.txt   # ✅ Dependencies with AWS support
+│   ├── frontend/              # ✅ React Frontend
+│   │   ├── src/
+│   │   ├── dist/              # Build output
+│   │   └── vite.config.ts     # ✅ Production optimized
+│   ├── infrastructure/        # ✅ AWS Deployment Scripts
+│   │   ├── ecs/task-definition.json
+│   │   ├── alb/application-load-balancer.json
+│   │   ├── ecr/build-and-push.sh
+│   │   ├── s3/deploy-frontend.sh
+│   │   └── security/security-groups.json
+│   ├── .github/workflows/     # ✅ CI/CD Pipelines
+│   │   ├── backend-deploy.yml
+│   │   └── frontend-deploy.yml
+│   └── docs/                  # ✅ Documentation
+└── test_healthcare_saas_app/  # ✅ Centralized test orchestration
 ```
 
 ## 🚀 Deployment Steps
@@ -95,7 +89,7 @@ aws ecr create-repository \
 
 #### 2.2 Build and Push Docker Image
 ```bash
-cd infrastructure/ecr
+cd healthcare_saas_app/infrastructure/ecr
 chmod +x build-and-push.sh
 ./build-and-push.sh
 ```
@@ -113,7 +107,7 @@ aws ecs create-cluster \
 # Replace ACCOUNT-ID with your actual AWS account ID
 
 aws ecs register-task-definition \
-  --cli-input-json file://infrastructure/ecs/task-definition.json
+  --cli-input-json file://healthcare_saas_app/infrastructure/ecs/task-definition.json
 ```
 
 #### 2.5 Create Application Load Balancer
@@ -164,7 +158,7 @@ aws s3 website s3://healthcare-frontend-bucket \
 
 #### 3.2 Build and Deploy Frontend
 ```bash
-cd infrastructure/s3
+cd healthcare_saas_app/infrastructure/s3
 chmod +x deploy-frontend.sh
 
 # Update the script with your bucket name and CloudFront ID
@@ -229,7 +223,7 @@ aws secretsmanager create-secret \
 ```
 
 #### 4.2 Update Task Definition with Secrets
-Edit `infrastructure/ecs/task-definition.json` to use the secret ARNs.
+Edit `healthcare_saas_app/infrastructure/ecs/task-definition.json` to use the secret ARNs.
 
 ### Phase 5: CI/CD Setup
 
@@ -239,7 +233,7 @@ Set these in your GitHub repository:
 - `AWS_SECRET_ACCESS_KEY`
 
 #### 5.2 Update Environment Variables
-Update `.github/workflows/backend-deploy.yml` and `.github/workflows/frontend-deploy.yml` with your actual values:
+Update `healthcare_saas_app/.github/workflows/backend-deploy.yml` and `healthcare_saas_app/.github/workflows/frontend-deploy.yml` with your actual values:
 - `S3_BUCKET`: Your S3 bucket name
 - `CF_DISTRIBUTION_ID`: Your CloudFront distribution ID
 - `ECS_CLUSTER`: Your ECS cluster name
@@ -248,7 +242,7 @@ Update `.github/workflows/backend-deploy.yml` and `.github/workflows/frontend-de
 ## 🔧 Environment Configuration
 
 ### Backend Environment Variables
-Copy `server/.env.example` to `server/.env` and update:
+Copy `healthcare_saas_app/.env.example` to `healthcare_saas_app/.env` and update:
 
 ```bash
 # Required
@@ -263,7 +257,7 @@ DATABASE_URL_ARN=arn:aws:secretsmanager:us-east-1:account-id:secret:healthcare-d
 ```
 
 ### Frontend Environment Variables
-Copy `frontend/.env.example` to `frontend/.env` and update:
+Copy `healthcare_saas_app/frontend/.env.example` to `healthcare_saas_app/frontend/.env` and update:
 
 ```bash
 VITE_API_BASE_URL=https://your-alb-domain.com/api

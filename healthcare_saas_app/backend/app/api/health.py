@@ -1,6 +1,10 @@
 """Health check endpoints for AWS ECS/Fargate monitoring."""
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter
+from fastapi import status
+from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from ..core.database import get_engine
@@ -29,20 +33,26 @@ async def health_check():
         }
     except SQLAlchemyError as e:
         logger.error(f"Database health check failed: {str(e)}")
-        return {
-            "status": "unhealthy",
-            "service": "healthcare-backend",
-            "database": "disconnected",
-            "error": "Database connection failed"
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "unhealthy",
+                "service": "healthcare-backend",
+                "database": "disconnected",
+                "error": "Database connection failed",
+            },
+        )
     except Exception as e:
         logger.error(f"Health check failed: {str(e)}")
-        return {
-            "status": "unhealthy",
-            "service": "healthcare-backend",
-            "database": "unknown",
-            "error": "Service unavailable"
-        }
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={
+                "status": "unhealthy",
+                "service": "healthcare-backend",
+                "database": "unknown",
+                "error": "Service unavailable",
+            },
+        )
 
 @router.get("/health/ready", tags=["health"])
 async def readiness_check():
@@ -66,11 +76,14 @@ async def readiness_check():
     
     all_healthy = all(checks.values())
     
-    return {
+    response_payload = {
         "status": "ready" if all_healthy else "not_ready",
         "checks": checks,
-        "service": "healthcare-backend"
+        "service": "healthcare-backend",
     }
+    if all_healthy:
+        return response_payload
+    return JSONResponse(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, content=response_payload)
 
 @router.get("/health/live", tags=["health"])
 async def liveness_check():
@@ -81,5 +94,5 @@ async def liveness_check():
     return {
         "status": "alive",
         "service": "healthcare-backend",
-        "timestamp": "2026-03-20T18:00:00Z"
+        "timestamp": datetime.now(UTC).isoformat(),
     }

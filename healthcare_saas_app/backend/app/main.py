@@ -11,9 +11,6 @@ headers are applied globally. The middleware ordering is intentional:
 from __future__ import annotations
 
 import logging
-import os
-from contextlib import asynccontextmanager
-from logging import INFO, basicConfig, getLogger
 
 from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
@@ -24,6 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.routes import api_router
 from .api.health import router as health_router
+from .core.config import settings
 from .core.database import get_engine
 from .middleware import AuditContextMiddleware, SecurityHeadersMiddleware, TenantContextMiddleware
 from .models.base import Base
@@ -59,15 +57,12 @@ def create_app() -> FastAPI:
             content={"detail": "Invalid request format. Please check your input and try again."},
         )
 
-    # Prefer environment-based secret loading in deployment.
-    jwt_secret = os.getenv("JWT_SECRET", "change-me-in-production")
-    jwt_algorithm = os.getenv("JWT_ALGORITHM", "HS256")
+    # Centralized configuration source for all runtime secrets and CORS values.
+    jwt_secret = settings.jwt_secret
+    jwt_algorithm = settings.jwt_algorithm
     cors_origins = [
         origin.strip()
-        for origin in os.getenv(
-            "CORS_ORIGINS",
-            "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:5174,http://localhost:5174",
-        ).split(",")
+        for origin in settings.cors_origins.split(",")
         if origin.strip()
     ]
 
