@@ -8,17 +8,30 @@ import type {
 } from "./types";
 
 const baseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "http://127.0.0.1:8000";
+const debugEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEBUG_LOGS === "true";
+
+function debugLog(...args: unknown[]) {
+  if (debugEnabled) {
+    console.log(...args);
+  }
+}
+
+function debugError(...args: unknown[]) {
+  if (debugEnabled) {
+    console.error(...args);
+  }
+}
 
 export async function request<T>(url: string, options?: RequestInit): Promise<T> {
   try {
     // Debug: Log the request details
     if (options?.headers && 'Authorization' in options.headers) {
       const authHeader = options.headers.Authorization as string;
-      console.log("Making authenticated request to:", `${baseUrl}${url}`);
-      console.log("Auth header present:", authHeader ? "Yes" : "No");
-      console.log("Auth header starts with Bearer:", authHeader.startsWith("Bearer ") ? "Yes" : "No");
+      debugLog("Making authenticated request to:", `${baseUrl}${url}`);
+      debugLog("Auth header present:", authHeader ? "Yes" : "No");
+      debugLog("Auth header starts with Bearer:", authHeader.startsWith("Bearer ") ? "Yes" : "No");
     } else {
-      console.log("Making unauthenticated request to:", `${baseUrl}${url}`);
+      debugLog("Making unauthenticated request to:", `${baseUrl}${url}`);
     }
     
     const response = await fetch(`${baseUrl}${url}`, {
@@ -29,11 +42,11 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
       },
     });
 
-    console.log(`Response status: ${response.status} ${response.statusText}`);
+    debugLog(`Response status: ${response.status} ${response.statusText}`);
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`Error response body:`, errorText);
+      debugError("Error response body:", errorText);
       
       // Try to parse JSON error to get the detail field
       try {
@@ -52,22 +65,26 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
     }
     
     const data = await response.json() as T;
-    console.log(`DEBUG: JSON response data for ${url}:`, data);
+    debugLog(`DEBUG: JSON response data for ${url}:`, data);
     return data;
   } catch (error) {
-    console.error(`Fetch error for ${url}:`, error);
-    console.error("Error type:", error.constructor.name);
-    console.error("Error message:", error.message);
+    if (error instanceof Error) {
+      debugError(`Fetch error for ${url}:`, error);
+      debugError("Error type:", error.constructor.name);
+      debugError("Error message:", error.message);
+    } else {
+      debugError(`Fetch error for ${url}:`, error);
+    }
     
     // Check if it's a network error
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      console.error("Network error detected - checking CORS and server status");
+      debugError("Network error detected - checking CORS and server status");
       throw new Error('Failed to fetch - please check your internet connection and ensure the server is running');
     }
     
     // Check if it's a CORS error
-    if (error.message.includes('CORS')) {
-      console.error("CORS error detected");
+    if (error instanceof Error && error.message.includes('CORS')) {
+      debugError("CORS error detected");
       throw new Error('CORS error - the server may not allow requests from this origin');
     }
     
@@ -77,7 +94,7 @@ export async function request<T>(url: string, options?: RequestInit): Promise<T>
 
 export function withAuth(token: string): Record<string, string> {
   if (!token) {
-    console.error("No token provided to withAuth!");
+    debugError("No token provided to withAuth.");
   }
   return { Authorization: `Bearer ${token}` };
 }
@@ -94,7 +111,7 @@ export const api = {
       method: "POST",
       body: JSON.stringify(payload),
     }).then(response => {
-      console.log('DEBUG: API login response:', response);
+      debugLog('DEBUG: API login response:', response);
       return response;
     }),
 
@@ -173,8 +190,8 @@ export const api = {
     }),
 
   patientPrescriptions: (token?: string) => {
-    console.log('API: Making patientPrescriptions call to /patient/prescriptions');
-    console.log('API: Token available:', !!token);
+    debugLog('API: Making patientPrescriptions call to /patient/prescriptions');
+    debugLog('API: Token available:', !!token);
     return request<Array<{
       appointment_time: string;
       patient_name: string;
@@ -192,17 +209,17 @@ export const api = {
       method: "GET",
       headers: withAuth(token || ''),
     }).then(response => {
-      console.log('API: patientPrescriptions response:', response);
+      debugLog('API: patientPrescriptions response:', response);
       return response;
     }).catch(error => {
-      console.error('API: patientPrescriptions error:', error);
+      debugError('API: patientPrescriptions error:', error);
       throw error;
     });
   },
 
   patientPrescriptionsFull: (token?: string) => {
-    console.log('API: Making patientPrescriptionsFull call to /patient/prescriptions-full');
-    console.log('API: Token available:', !!token);
+    debugLog('API: Making patientPrescriptionsFull call to /patient/prescriptions-full');
+    debugLog('API: Token available:', !!token);
     return request<Array<{
       appointment_time: string;
       doctor_name: string;
@@ -218,10 +235,10 @@ export const api = {
       method: "GET",
       headers: withAuth(token || ''),
     }).then(response => {
-      console.log('API: patientPrescriptionsFull response:', response);
+      debugLog('API: patientPrescriptionsFull response:', response);
       return response;
     }).catch(error => {
-      console.error('API: patientPrescriptionsFull error:', error);
+      debugError('API: patientPrescriptionsFull error:', error);
       throw error;
     });
   },
@@ -295,8 +312,8 @@ export const api = {
         date_of_birth: payload.dateOfBirth,
       };
       
-      console.log("🔍 DEBUG: Doctor self-registration payload:", requestBody);
-      console.log("🔍 DEBUG: Phone field in doctor registration:", requestBody.phone);
+      debugLog("🔍 DEBUG: Doctor self-registration payload:", requestBody);
+      debugLog("🔍 DEBUG: Phone field in doctor registration:", requestBody.phone);
       
       return request<{ message: string }>("/doctors/register", {
         method: "POST",
@@ -508,8 +525,8 @@ export const api = {
     }),
 
   updateDoctorProfile: (token: string, payload: any) => {
-      console.log("🔍 DEBUG: Doctor profile update payload:", payload);
-      console.log("🔍 DEBUG: Phone field in profile update:", payload.phone);
+      debugLog("🔍 DEBUG: Doctor profile update payload:", payload);
+      debugLog("🔍 DEBUG: Phone field in profile update:", payload.phone);
       
       return request<{ message: string }>(`/doctor/profile`, {
         method: "PUT",
@@ -541,10 +558,10 @@ export const api = {
       method: "GET",
       headers: withAuth(token || ''),
     }).then(response => {
-      console.log('API: getPharmacies response:', response);
+      debugLog('API: getPharmacies response:', response);
       return response;
     }).catch(error => {
-      console.error('API: getPharmacies error:', error);
+      debugError('API: getPharmacies error:', error);
       throw error;
     }),
 

@@ -14,6 +14,13 @@ import { DEFAULT_COUNTRY, STATUS_MESSAGE_DURATION, INITIAL_STATUS_DURATION } fro
 import type { SessionState, Role, LoginFormState, PatientRegistrationState, RegisterPayload } from "../types/app";
 
 const initialSession: SessionState = { accessToken: "", role: "GUEST", tenantId: "" };
+const debugEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_DEBUG_LOGS === "true";
+
+function debugLog(...args: unknown[]) {
+  if (debugEnabled) {
+    console.log(...args);
+  }
+}
 
 interface AuthContextType {
   session: SessionState;
@@ -69,8 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                        status.includes("Authentication failed") ||
                        status.includes("registered as a") && status.includes("not a") && status.includes("Please use the");
         
-        console.log('🔍 DEBUG: Auto-clear check - status:', status);
-        console.log('🔍 DEBUG: Auto-clear check - isError:', isError);
+        debugLog("Auto-clear status check:", { status, isError });
         
         // Success messages clear after 10 seconds, errors stay persistent
         const clearDelay = isError ? 0 : 10000;
@@ -110,8 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Handle login
   async function handleLogin(target: "PATIENT" | "DOCTOR" | "ADMIN") {
-    console.log('🔍 DEBUG: handleLogin called for target:', target);
-    console.log('🔍 DEBUG: Email being sent:', loginForm.email);
+    debugLog("Auth login requested for role:", target);
     
     try {
       const result = await api.login({ 
@@ -120,13 +125,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         remember_me: false 
       });
       
-      console.log('🔍 DEBUG: Login API result:', result);
+      debugLog("Login API result received.");
       
       // CRITICAL SECURITY: Validate that the returned role matches the target role
       if (result.role !== target) {
-        console.log('🔍 SECURITY BREACH: Role mismatch detected!');
-        console.log('🔍 Expected role:', target);
-        console.log('🔍 Actual role:', result.role);
+        debugLog("Role mismatch detected during login.", {
+          expectedRole: target,
+          actualRole: result.role,
+        });
         
         // SECURITY: Always show generic message to prevent credential discovery
         const errorMessage = "Invalid credentials";
@@ -143,7 +149,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         insurancePolicyId: result.insurance_policy_id,
       };
       
-      console.log('🔍 DEBUG: Setting session:', newSession);
+      debugLog("Login succeeded. Updating session state.");
       setSession(newSession);
       
       // Clear any existing error messages on successful login
@@ -176,13 +182,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
       
-      console.log('🔍 DEBUG: Setting error message:', errorMessage);
-      console.log('🔍 DEBUG: Status before setting:', status);
+      debugLog("Login failed. Updating auth status.");
       
       // Use setTimeout to ensure React state update is processed
       setTimeout(() => {
         setStatus(errorMessage);
-        console.log('🔍 DEBUG: Status after setting (in timeout):', errorMessage);
+        debugLog("Auth status updated after failed login.");
       }, 0);
     }
   }

@@ -107,6 +107,13 @@ def create_app() -> FastAPI:
         keeps first-run local development productive.
         """
 
+        if not settings.db_schema_init_on_startup:
+            app_logger.info(
+                "Skipping ORM metadata initialization on startup "
+                "(DB_SCHEMA_INIT_ON_STARTUP=false)."
+            )
+            return
+
         try:
             async with get_engine().begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)

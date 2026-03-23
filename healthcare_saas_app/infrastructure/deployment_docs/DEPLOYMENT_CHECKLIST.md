@@ -15,17 +15,32 @@
 - [ ] Backend containerized with Dockerfile
 ```text
 HealthCare_Application/
-├── backend/                   # ✅ FastAPI Backend
-│   ├── app/
-│   │   ├── api/               # API routes + health checks
-│   │   ├── core/              # Config, security, AWS secrets
-│   │   ├── models/            # Database models
-│   │   ├── services/          # Business logic
-│   │   ├── middleware/        # Custom middleware
-│   │   └── main.py            # FastAPI entrypoint
-│   ├── Dockerfile             # ✅ Production-ready container
-│   ├── requirements.txt       # ✅ Dependencies with AWS support
-│   └── .env.example           # ✅ Environment templates provided
+├── healthcare_saas_app/
+│   ├── backend/               # ✅ FastAPI Backend
+│   │   ├── app/
+│   │   │   ├── api/           # API routes + health checks
+│   │   │   ├── core/          # Config, security, AWS secrets
+│   │   │   ├── models/        # Database models
+│   │   │   ├── services/      # Business logic
+│   │   │   ├── middleware/    # Custom middleware
+│   │   │   └── main.py        # FastAPI entrypoint
+│   │   ├── Dockerfile         # ✅ Production-ready container
+│   │   └── requirements.txt   # ✅ Dependencies with AWS support
+│   ├── frontend/              # ✅ React Frontend
+│   │   ├── src/
+│   │   ├── dist/              # Build output
+│   │   └── vite.config.ts     # ✅ Production optimized
+│   ├── infrastructure/        # ✅ AWS Deployment Scripts
+│   │   ├── ecs/task-definition.json
+│   │   ├── alb/application-load-balancer.json
+│   │   ├── ecr/build-and-push.sh
+│   │   ├── s3/deploy-frontend.sh
+│   │   └── security/security-groups.json
+│   ├── .github/workflows/     # ✅ CI/CD Pipelines
+│   │   ├── backend-deploy.yml
+│   │   └── frontend-deploy.yml
+│   └── docs/                  # ✅ Documentation
+└── test_healthcare_saas_app/  # ✅ Centralized test orchestration
 ```
 - [ ] CI/CD workflows configured
 
@@ -47,10 +62,10 @@ aws ecr create-repository --repository-name healthcare-backend --region us-east-
 ```
 
 #### ✅ Build and Push Container
-- [ ] Update infrastructure/ecr/build-and-push.sh with your account ID
+- [ ] Update healthcare_saas_app/infrastructure/ecr/build-and-push.sh with your account ID
 - [ ] Run build script
 ```bash
-cd infrastructure/ecr
+cd healthcare_saas_app/infrastructure/ecr
 ./build-and-push.sh
 ```
 
@@ -63,7 +78,7 @@ aws ecs create-cluster --cluster-name healthcare-cluster
 - [ ] Update task-definition.json with your AWS account ID
 - [ ] Register task definition
 ```bash
-aws ecs register-task-definition --cli-input-json file://infrastructure/ecs/task-definition.json
+aws ecs register-task-definition --cli-input-json file://healthcare_saas_app/infrastructure/ecs/task-definition.json
 ```
 
 #### ✅ Load Balancer Setup
@@ -89,18 +104,18 @@ aws s3 mb s3://your-unique-bucket-name
 - [ ] Set bucket policy for public access
 
 #### ✅ Frontend Build
-- [ ] Update frontend/.env with API URL
+- [ ] Update healthcare_saas_app/frontend/.env with API URL
 - [ ] Build React application
 ```bash
-cd frontend
+cd healthcare_saas_app/frontend
 npm run build
 ```
 
 #### ✅ Deploy to S3
-- [ ] Update infrastructure/s3/deploy-frontend.sh
+- [ ] Update healthcare_saas_app/infrastructure/s3/deploy-frontend.sh
 - [ ] Run deployment script
 ```bash
-cd infrastructure/s3
+cd healthcare_saas_app/infrastructure/s3
 ./deploy-frontend.sh
 ```
 
@@ -145,6 +160,7 @@ aws secretsmanager create-secret --name healthcare-cors-origins --secret-string 
   - Update S3 bucket name
   - Update CloudFront distribution ID
   - Update ECS cluster and service names
+  - Ensure paths reference `healthcare_saas_app/backend/**` and `healthcare_saas_app/frontend/**`
 
 #### ✅ Test CI/CD
 - [ ] Push to main branch
